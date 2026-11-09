@@ -44,3 +44,5 @@ ya jab design doc se hatke kuch karte hain (deviation).
 | 0013 | [Design doc copy in repo, no Google link](0013-design-doc-in-repo.md) | Accepted |
 | 0014 | [Skip Phase 0; MVP only](0014-skip-phase0-validation.md) | Accepted |
 | 0015 | [Dev environment details](0015-dev-environment-details.md) | Accepted |
+| 0016 | [No-build TypeScript (Node native) + Vitest](0016-no-build-typescript-and-vitest.md) | Accepted |
+| 0017 | [`@marky/config` design](0017-config-module-design.md) | Accepted |

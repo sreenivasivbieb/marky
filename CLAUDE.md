@@ -85,9 +85,12 @@ status strings, model names, rate limits) ke literal logic me nahi aayenge. Valu
 - User ka editor: VS Code / Cursor.
 - **Step 1a (dev environment) bana aur verify hua** (ADR 0015): `./dev init|up` → node 26.13.0, pnpm 12.18.0,
   Postgres 18.6, Valkey 9.1.3, dbmate 2.38.0, sab host UID 1000 se chalte hain. Commands ke liye `./dev help` dekho.
-- Git: commit `3405bb6` (docs) ho chuka hai; Step 1a ki files abhi uncommitted hain. Push abhi tak nahi hua.
-  Repo-local git email = GitHub noreply.
-- Provisional, user review pending: dev me Valkey bina password ke; dbmate schema dump off.
+- **Step 1b (`@marky/config`) bana aur verify hua** (ADR 0016, 0017): no-build TS (Node native, `erasableSyntaxOnly`),
+  TS 7 typecheck, Vitest; env loader (lazy) + tunables (base + per-env overrides, import par validate, frozen).
+  Commands: `./dev pnpm typecheck`, `./dev pnpm test`, `./dev pnpm check`. Relative imports me `.ts` extension zaroori.
+- Git: `3405bb6`, `1fd5b24` pushed to origin/main. Step 1b abhi uncommitted. Repo-local git email = GitHub noreply.
+- Provisional (user ne inhe as-is commit karwaya, revisit pending): dev me Valkey bina password ke; dbmate schema dump off;
+  healthcheck timing compose ke `x-dev-tunables` me.
 - Phase 0 ka koi kaam nahi hoga (ADR 0014).
-- Next: **Step 1b: config modules** (`platform/config`: env loader + tunables, dono alag Zod schema; ADR 0003),
-  phir **Step 1c: pehli migrations + RLS design** (guest/stakeholder context ke saath). Dono se pehle design user se discuss karo.
+- Next: **Step 1c: pehli migrations + RLS design** (tenant context, guest/stakeholder context, Auth.js tables).
+  Code se pehle design user se discuss karo.

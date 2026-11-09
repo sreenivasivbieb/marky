@@ -1,0 +1,13 @@
+{
+  "name": "@marky/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Env loader (secrets/connection) + tunables (timeouts, limits). Dono alag; ADR 0003, 0017.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  }
+}

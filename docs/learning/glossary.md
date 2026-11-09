@@ -48,7 +48,32 @@ Har naya term jo project me aata hai, yahan simple bhasha me. Format: **Term**: 
 - **Domain module**: ek business area ka code ek jagah (jaise `changes`, `decisions`). *ADR 0007*
 - **Dependency direction**: kaun kisko import kar sakta hai. Yahan `apps → modules → platform`, ulta nahi. *ADR 0007*
 
+## TypeScript / config patterns
+- **Type stripping**: Node 26 `.ts` file se types hata kar bacha JS seedha chala deta hai, bina build ke. *ADR 0016*
+- **Erasable syntax**: TS syntax jo sirf types hai aur hataya ja sakta hai. `enum` / `namespace` erasable nahi hain,
+  kyunki ye runtime code banate hain. Isliye hum `as const` use karte hain. *ADR 0016, app-env.ts*
+- **`as const`**: TS ko batata hai ki ye values kabhi nahi badlengi, to `["a","b"]` ka type `"a" | "b"` ban jaata hai. *app-env.ts*
+- **`satisfies`**: check karo ki value kisi type se match karti hai, par value ka apna exact type mat khoo. *tunables/base.ts*
+- **Type-check vs run**: `tsc --noEmit` sirf galtiyan dhoondta hai, code nahi banata. Node chalate waqt types ignore karta hai,
+  isliye `./dev pnpm typecheck` alag se chalana zaroori hai. *ADR 0016*
+- **Schema validation (Zod)**: data ka "shape + rules" ek jagah likho; runtime par check ho jaata hai aur TS type bhi wahin se
+  ban jaata hai (`z.infer`). *platform/config*
+- **Strict object schema**: unknown key = error. Override me typo (`heartbeatMS`) chupchaap ignore nahi hota. *tunables/schema.ts*
+- **Cross-field validation (`refine`)**: rule jo do fields ko saath dekhta hai (heartbeat < idle release). *tunables/schema.ts*
+- **Lazy vs eager**: eager = turant karo (import par); lazy = jab pehli baar zaroorat ho tab karo, phir cache karo. *ADR 0017*
+- **Memoization / cache (`??=`)**: pehli baar compute karo, result yaad rakho, agli baar wahi lautao. *env.ts*
+- **Deep merge**: nested objects ko andar tak milana (sirf top level nahi). *deep-merge.ts*
+- **Prototype pollution**: `__proto__` jaisi key se saare objects ka base badal dena. Ye ek security bug hai, isliye aisi keys skip
+  karte hain. *deep-merge.ts*
+- **Freeze (`Object.freeze`)**: object read-only ho jaata hai, taaki runtime par galti se tunable na badle. *deep-merge.ts*
+- **Pure function**: same input par hamesha same output, aur koi bahar ki cheez nahi chhoota. Test karna aasaan hai
+  (`parseEnv(source)`). *env.ts*
+- **Test fixture**: test ke liye fake data (`FAKE_SECRET`), asli secrets kabhi nahi. *env.test.ts*
+- **Negative test / probe**: jaan-boojh kar galti daal kar dekhna ki check use pakadta hai ya nahi (jaise `enum` probe).
+  Sirf "pass" dekhna kaafi nahi hota. *Step 1b*
+
 ## Tooling
+- **Exact version pin (`savePrefix: ""`)**: `zod@4.6.7` likha jaata hai, `^4.6.7` nahi (`^` = "4.x me koi bhi naya chalega"). *ADR 0016*
 - **git / remote / GitHub**: git code ki history rakhta hai; remote (GitHub) us history ki online copy hai. *ADR 0006*
 - **Package manager**: tool jo libraries (dependencies) download aur version-manage karta hai. *ADR 0002*
 - **Monorepo**: ek git repo me kai packages/apps (web app, worker, shared code). *ADR 0002*

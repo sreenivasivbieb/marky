@@ -6,3 +6,6 @@ packages:
 
 # Store repo ke andar (gitignored), node_modules ke saath same filesystem par, taaki hardlinks chalein (ADR 0015).
 storeDir: ./.pnpm-store
+
+# `pnpm add` exact version likhe (`4.6.7`), `^4.6.7` jaisi range nahi (ADR 0016).
+savePrefix: ""

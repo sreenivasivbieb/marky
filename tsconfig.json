@@ -1,0 +1,28 @@
+{
+  // Root type-check config (ADR 0016). TypeScript sirf CHECK karta hai, JS emit nahi karta:
+  // Node 26 .ts files seedhe chalata hai, aur Next.js apna compile khud karta hai.
+  "compilerOptions": {
+    "target": "esnext",
+    "lib": ["esnext"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "types": ["node"],
+
+    // --- No-build ke liye zaroori ---
+    "noEmit": true,
+    "allowImportingTsExtensions": true, // `import "./env.ts"`: Node ko extension chahiye
+    "erasableSyntaxOnly": true,         // enum/namespace jaisi syntax jo Node strip nahi kar sakta, wo error
+    "verbatimModuleSyntax": true,       // type-only imports ko `import type` likhna padega
+    "isolatedModules": true,
+
+    // --- Strictness: bugs compile time par pakdo ---
+    "strict": true,
+    "noUncheckedIndexedAccess": true,   // arr[0] ka type `T | undefined`, kyunki element ho bhi sakta hai, nahi bhi
+    "exactOptionalPropertyTypes": true, // `{ a?: string }` me `a: undefined` likhna allowed nahi
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+
+    "skipLibCheck": true
+  },
+  "include": ["apps/*/src", "modules/*/src", "platform/*/src", "vitest.config.ts"]
+}

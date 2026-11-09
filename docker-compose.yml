@@ -33,6 +33,7 @@ services:
     volumes:
       - .:/workspace
     environment:
+      APP_ENV: ${APP_ENV:?.env missing APP_ENV (dekho .env.example)}
       DATABASE_URL: *database-url
       VALKEY_URL: "redis://valkey:6379"   # Valkey Redis protocol bolta hai, isliye scheme redis://
       PORT: ${WEB_PORT:?}
