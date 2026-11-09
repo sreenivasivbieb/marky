@@ -121,9 +121,11 @@ status strings, model names, rate limits) ke literal logic me nahi aayenge. Valu
     Follow-up: 2-connection concurrency test.
 - **Step 3: AI layer** (D64–D76, ADR 0025 BYOK, 0026 memory, **0027 provider-agnostic**: native adapters for
   Anthropic / OpenAI / Gemini behind our `ModelGateway`; owner chooses provider + model; usage = tokens only). Teen hisse:
-  - **3a (next):** schema (`ai_credentials` incl. provider + model, `ai_requests` (tokens, no cost), `chat_turns`, `documents.chat_summary`, decisions from chat)
+  - **3a (done):** migration `…_ai_layer_core.sql`, `@marky/crypto` (AES-256-GCM secret box), `@marky/ai` credentials
+    (set/remove/info/load, owner-only, AAD = product), master key `AI_KEY_ENCRYPTION_KEY` (env). Tests: 11 key-security + 5 schema.
+  - _(3a ka purana plan:)_ schema (`ai_credentials` incl. provider + model, `ai_requests` (tokens, no cost), `chat_turns`, `documents.chat_summary`, decisions from chat)
     + key encryption module + RLS tests.
-  - **3b:** `modules/ai` Draft orchestrator: context builder (decisions → summary → recent turns → document), `propose_change`
+  - **3b (next):** `modules/ai` Draft orchestrator + provider adapters (Anthropic / OpenAI / Gemini, official SDKs): context builder (decisions → summary → recent turns → document), `propose_change`
     tool → `@marky/changes`, usage ledger, timeouts/retries/circuit breaker, max iterations. Tests sirf fake gateway se;
     **asli API call user ki permission ke bina nahi** (paisa lagta hai).
   - **3c:** `suggest_decision` tool + save-as-decision, rolling summary update.

@@ -63,12 +63,34 @@ export const AUDIT_ACTIONS = [
   "change.stale",
   "version.created",
   "decision.recorded",
+  "ai_credential.set",
+  "ai_credential.removed",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
 /** audit_events.target_type */
-export const AUDIT_TARGET_TYPES = ["document", "change", "version", "decision"] as const;
+export const AUDIT_TARGET_TYPES = ["document", "change", "version", "decision", "ai_credential"] as const;
 export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];
+
+/** AI providers jinke native adapters hain (ADR 0027). Naya provider = migration + yahan + adapter. */
+export const AI_PROVIDERS = ["anthropic", "openai", "google"] as const;
+export type AiProvider = (typeof AI_PROVIDERS)[number];
+
+/** ai_requests.purpose: model call kis kaam ke liye hua */
+export const AI_REQUEST_PURPOSES = ["chat", "summary", "connection_test"] as const;
+export type AiRequestPurpose = (typeof AI_REQUEST_PURPOSES)[number];
+
+/** ai_requests.status */
+export const AI_REQUEST_STATUSES = ["succeeded", "failed", "refused"] as const;
+export type AiRequestStatus = (typeof AI_REQUEST_STATUSES)[number];
+
+/** chat_turns.role */
+export const CHAT_ROLES = ["user", "assistant"] as const;
+export type ChatRole = (typeof CHAT_ROLES)[number];
+
+/** chat_turns.mode: design doc section 3 (Draft / Align / Ship) */
+export const AI_MODES = ["draft", "align", "ship"] as const;
+export type AiMode = (typeof AI_MODES)[number];
 
 /** Registry: "table.column" → allowed values. Drift test isi ko DB se milata hai. */
 export const VALUE_LISTS = {
@@ -83,4 +105,10 @@ export const VALUE_LISTS = {
   "audit_events.actor_type": AUDIT_ACTOR_TYPES,
   "audit_events.action": AUDIT_ACTIONS,
   "audit_events.target_type": AUDIT_TARGET_TYPES,
+  "ai_credentials.provider": AI_PROVIDERS,
+  "ai_requests.provider": AI_PROVIDERS,
+  "ai_requests.purpose": AI_REQUEST_PURPOSES,
+  "ai_requests.status": AI_REQUEST_STATUSES,
+  "chat_turns.role": CHAT_ROLES,
+  "chat_turns.mode": AI_MODES,
 } as const satisfies Record<string, readonly string[]>;

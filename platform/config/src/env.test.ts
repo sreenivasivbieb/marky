@@ -8,6 +8,7 @@ const validSource = {
   APP_ENV: "test",
   DATABASE_URL: `postgres://marky:${FAKE_SECRET}@postgres:5432/marky`,
   VALKEY_URL: "redis://valkey:6379",
+  AI_KEY_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"), // fake, sirf test
   PATH: "/usr/bin", // process.env me extra keys hoti hain; unhe ignore hona chahiye
 };
 
@@ -28,6 +29,7 @@ describe("parseEnv", () => {
       APP_ENV: "test",
       DATABASE_URL: validSource.DATABASE_URL,
       VALKEY_URL: validSource.VALKEY_URL,
+      AI_KEY_ENCRYPTION_KEY: validSource.AI_KEY_ENCRYPTION_KEY,
     });
     expect(env).not.toHaveProperty("PATH");
   });
@@ -61,6 +63,13 @@ describe("parseEnv", () => {
     );
     expect(error.message).not.toContain(FAKE_SECRET);
     expect(error.problems.join("\n")).not.toContain(FAKE_SECRET);
+  });
+
+  it("master key: galat length reject, aur error me key ki value nahi", () => {
+    const shortKey = Buffer.alloc(16, 9).toString("base64");
+    const error = captureConfigError(() => parseEnv({ ...validSource, AI_KEY_ENCRYPTION_KEY: shortKey }));
+    expect(error.problems.some((p) => p.startsWith("AI_KEY_ENCRYPTION_KEY:"))).toBe(true);
+    expect(error.message).not.toContain(shortKey);
   });
 
   it("unknown APP_ENV reject karta hai", () => {

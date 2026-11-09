@@ -20,6 +20,18 @@ importers:
         specifier: 5.1.0
         version: 5.1.0(@types/node@26.6.6)(vite@8.3.6(@types/node@26.6.6))
 
+  modules/ai:
+    dependencies:
+      '@marky/crypto':
+        specifier: workspace:*
+        version: link:../../platform/crypto
+      '@marky/db':
+        specifier: workspace:*
+        version: link:../../platform/db
+      kysely:
+        specifier: 0.29.8
+        version: 0.29.8
+
   modules/changes:
     dependencies:
       '@marky/db':
@@ -60,6 +72,12 @@ importers:
       zod:
         specifier: 4.6.7
         version: 4.6.7
+
+  platform/crypto:
+    devDependencies:
+      fast-check:
+        specifier: 4.10.2
+        version: 4.10.2
 
   platform/db:
     dependencies:

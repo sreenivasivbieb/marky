@@ -3,7 +3,7 @@
  * Please do not edit it manually.
  */
 
-import type { AuditAction, AuditActorType, AuditTargetType, BlockType, ChangeAuthorType, ChangeOp, ChangeStatus, DecisionStatus, DocumentState, MembershipRole, ProductPlan } from "../value-lists.ts";
+import type { AiMode, AiProvider, AiRequestPurpose, AiRequestStatus, AuditAction, AuditActorType, AuditTargetType, BlockType, ChangeAuthorType, ChangeOp, ChangeStatus, ChatRole, DecisionStatus, DocumentState, MembershipRole, ProductPlan } from "../value-lists.ts";
 import type { ColumnType } from "kysely";
 
 export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
@@ -23,6 +23,41 @@ export type JsonPrimitive = boolean | number | string | null;
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
+
+export interface AiCredentials {
+  key_auth_tag: Buffer;
+  key_ciphertext: Buffer;
+  key_hint: string;
+  key_iv: Buffer;
+  key_version: Generated<number>;
+  model: string;
+  product_id: string;
+  provider: AiProvider;
+  updated_at: Generated<Timestamp>;
+  updated_by: string;
+}
+
+export interface AiRequests {
+  cache_read_tokens: number | null;
+  cache_write_tokens: number | null;
+  created_at: Generated<Timestamp>;
+  document_id: string | null;
+  duration_ms: number;
+  error_code: string | null;
+  id: Generated<string>;
+  input_tokens: Generated<number>;
+  model: string;
+  output_tokens: Generated<number>;
+  product_id: string;
+  provider: AiProvider;
+  purpose: AiRequestPurpose;
+  redacted_at: Timestamp | null;
+  request_payload: Json | null;
+  response_payload: Json | null;
+  status: AiRequestStatus;
+  stop_reason: string | null;
+  user_id: string;
+}
 
 export interface AuditEvents {
   action: AuditAction;
@@ -59,6 +94,7 @@ export interface Changes {
   before: Json | null;
   before_hash: string | null;
   block_id: string | null;
+  chat_turn_id: string | null;
   created_at: Generated<Timestamp>;
   decided_at: Timestamp | null;
   decided_by: string | null;
@@ -73,8 +109,21 @@ export interface Changes {
   status: Generated<ChangeStatus>;
 }
 
+export interface ChatTurns {
+  author_id: string;
+  content: string;
+  created_at: Generated<Timestamp>;
+  decision_suggestions: Generated<Json>;
+  document_id: string;
+  id: Generated<string>;
+  mode: AiMode;
+  product_id: string;
+  role: ChatRole;
+}
+
 export interface Decisions {
-  change_id: string;
+  change_id: string | null;
+  chat_turn_id: string | null;
   created_at: Generated<Timestamp>;
   created_by: string;
   document_id: string;
@@ -88,6 +137,8 @@ export interface Decisions {
 }
 
 export interface Documents {
+  chat_summary: Generated<string>;
+  chat_summary_through: string | null;
   created_at: Generated<Timestamp>;
   created_by: string;
   current_version: Generated<number>;
@@ -131,9 +182,12 @@ export interface Versions {
 }
 
 export interface DB {
+  ai_credentials: AiCredentials;
+  ai_requests: AiRequests;
   audit_events: AuditEvents;
   blocks: Blocks;
   changes: Changes;
+  chat_turns: ChatTurns;
   decisions: Decisions;
   documents: Documents;
   memberships: Memberships;

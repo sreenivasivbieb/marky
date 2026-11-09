@@ -1,0 +1,13 @@
+{
+  "name": "@marky/crypto",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Secret box: AES-256-GCM encryption for small secrets (team AI API keys). ADR 0025.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "fast-check": "4.10.2"
+  }
+}

@@ -14,7 +14,12 @@
     "DecisionStatus": "../value-lists.ts",
     "AuditActorType": "../value-lists.ts",
     "AuditAction": "../value-lists.ts",
-    "AuditTargetType": "../value-lists.ts"
+    "AuditTargetType": "../value-lists.ts",
+    "AiProvider": "../value-lists.ts",
+    "AiRequestPurpose": "../value-lists.ts",
+    "AiRequestStatus": "../value-lists.ts",
+    "ChatRole": "../value-lists.ts",
+    "AiMode": "../value-lists.ts"
   },
   "overrides": {
     "columns": {
@@ -28,7 +33,13 @@
       "decisions.status": "Generated<DecisionStatus>",
       "audit_events.actor_type": "AuditActorType",
       "audit_events.action": "AuditAction",
-      "audit_events.target_type": "AuditTargetType"
+      "audit_events.target_type": "AuditTargetType",
+      "ai_credentials.provider": "AiProvider",
+      "ai_requests.provider": "AiProvider",
+      "ai_requests.purpose": "AiRequestPurpose",
+      "ai_requests.status": "AiRequestStatus",
+      "chat_turns.role": "ChatRole",
+      "chat_turns.mode": "AiMode"
     }
   }
 }

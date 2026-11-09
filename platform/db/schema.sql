@@ -34,6 +34,21 @@ CREATE FUNCTION app.actor() RETURNS jsonb
 $$;
 
 
+--
+-- Name: ai_credential_secret(uuid); Type: FUNCTION; Schema: app; Owner: -
+--
+
+CREATE FUNCTION app.ai_credential_secret(p_product_id uuid) RETURNS TABLE(provider text, model text, key_ciphertext bytea, key_iv bytea, key_auth_tag bytea, key_version smallint)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT c.provider, c.model, c.key_ciphertext, c.key_iv, c.key_auth_tag, c.key_version
+  FROM public.ai_credentials AS c
+  WHERE c.product_id = p_product_id
+    AND app.is_owner(p_product_id)
+$$;
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -181,6 +196,64 @@ $$;
 
 
 --
+-- Name: ai_credentials; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ai_credentials (
+    product_id uuid NOT NULL,
+    provider text NOT NULL,
+    model text NOT NULL,
+    key_ciphertext bytea NOT NULL,
+    key_iv bytea NOT NULL,
+    key_auth_tag bytea NOT NULL,
+    key_version smallint DEFAULT 1 NOT NULL,
+    key_hint text NOT NULL,
+    updated_by uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ai_credentials_key_hint_check CHECK (((char_length(key_hint) >= 1) AND (char_length(key_hint) <= 8))),
+    CONSTRAINT ai_credentials_key_version_check CHECK ((key_version >= 1)),
+    CONSTRAINT ai_credentials_model_check CHECK ((btrim(model) <> ''::text)),
+    CONSTRAINT ai_credentials_provider_check CHECK ((provider = ANY (ARRAY['anthropic'::text, 'openai'::text, 'google'::text])))
+);
+
+
+--
+-- Name: ai_requests; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ai_requests (
+    id uuid DEFAULT uuidv7() NOT NULL,
+    product_id uuid NOT NULL,
+    document_id uuid,
+    user_id uuid NOT NULL,
+    purpose text NOT NULL,
+    provider text NOT NULL,
+    model text NOT NULL,
+    status text NOT NULL,
+    stop_reason text,
+    error_code text,
+    input_tokens integer DEFAULT 0 NOT NULL,
+    output_tokens integer DEFAULT 0 NOT NULL,
+    cache_read_tokens integer,
+    cache_write_tokens integer,
+    duration_ms integer NOT NULL,
+    request_payload jsonb,
+    response_payload jsonb,
+    redacted_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ai_requests_cache_read_tokens_check CHECK ((cache_read_tokens >= 0)),
+    CONSTRAINT ai_requests_cache_write_tokens_check CHECK ((cache_write_tokens >= 0)),
+    CONSTRAINT ai_requests_duration_ms_check CHECK ((duration_ms >= 0)),
+    CONSTRAINT ai_requests_input_tokens_check CHECK ((input_tokens >= 0)),
+    CONSTRAINT ai_requests_output_tokens_check CHECK ((output_tokens >= 0)),
+    CONSTRAINT ai_requests_provider_check CHECK ((provider = ANY (ARRAY['anthropic'::text, 'openai'::text, 'google'::text]))),
+    CONSTRAINT ai_requests_purpose_check CHECK ((purpose = ANY (ARRAY['chat'::text, 'summary'::text, 'connection_test'::text]))),
+    CONSTRAINT ai_requests_redacted_shape CHECK (((redacted_at IS NULL) OR ((request_payload IS NULL) AND (response_payload IS NULL)))),
+    CONSTRAINT ai_requests_status_check CHECK ((status = ANY (ARRAY['succeeded'::text, 'failed'::text, 'refused'::text])))
+);
+
+
+--
 -- Name: audit_events; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -194,9 +267,9 @@ CREATE TABLE public.audit_events (
     target_id uuid NOT NULL,
     metadata jsonb DEFAULT '{}'::jsonb NOT NULL,
     at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT audit_events_action_check CHECK ((action = ANY (ARRAY['document.created'::text, 'change.proposed'::text, 'change.accepted'::text, 'change.rejected'::text, 'change.stale'::text, 'version.created'::text, 'decision.recorded'::text]))),
+    CONSTRAINT audit_events_action_check CHECK ((action = ANY (ARRAY['document.created'::text, 'change.proposed'::text, 'change.accepted'::text, 'change.rejected'::text, 'change.stale'::text, 'version.created'::text, 'decision.recorded'::text, 'ai_credential.set'::text, 'ai_credential.removed'::text]))),
     CONSTRAINT audit_events_actor_type_check CHECK ((actor_type = ANY (ARRAY['user'::text, 'ai'::text, 'guest'::text, 'system'::text]))),
-    CONSTRAINT audit_events_target_type_check CHECK ((target_type = ANY (ARRAY['document'::text, 'change'::text, 'version'::text, 'decision'::text])))
+    CONSTRAINT audit_events_target_type_check CHECK ((target_type = ANY (ARRAY['document'::text, 'change'::text, 'version'::text, 'decision'::text, 'ai_credential'::text])))
 );
 
 
@@ -248,6 +321,7 @@ CREATE TABLE public.changes (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     accepted_after jsonb,
     restore_of_version integer,
+    chat_turn_id uuid,
     CONSTRAINT changes_accepted_add_has_block CHECK ((NOT ((op = 'add'::text) AND (status = 'accepted'::text) AND (block_id IS NULL)))),
     CONSTRAINT changes_accepted_after_shape CHECK (((accepted_after IS NULL) OR ((status = 'accepted'::text) AND (op = ANY (ARRAY['add'::text, 'edit'::text]))))),
     CONSTRAINT changes_accepted_has_version CHECK (((status = 'accepted'::text) = (resulting_version IS NOT NULL))),
@@ -262,6 +336,26 @@ CREATE TABLE public.changes (
 
 
 --
+-- Name: chat_turns; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.chat_turns (
+    id uuid DEFAULT uuidv7() NOT NULL,
+    document_id uuid NOT NULL,
+    product_id uuid NOT NULL,
+    role text NOT NULL,
+    mode text NOT NULL,
+    author_id uuid NOT NULL,
+    content text NOT NULL,
+    decision_suggestions jsonb DEFAULT '[]'::jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT chat_turns_mode_check CHECK ((mode = ANY (ARRAY['draft'::text, 'align'::text, 'ship'::text]))),
+    CONSTRAINT chat_turns_role_check CHECK ((role = ANY (ARRAY['user'::text, 'assistant'::text]))),
+    CONSTRAINT chat_turns_suggestions_shape CHECK (((jsonb_typeof(decision_suggestions) = 'array'::text) AND ((role = 'assistant'::text) OR (decision_suggestions = '[]'::jsonb))))
+);
+
+
+--
 -- Name: decisions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -269,7 +363,7 @@ CREATE TABLE public.decisions (
     id uuid DEFAULT uuidv7() NOT NULL,
     product_id uuid NOT NULL,
     document_id uuid NOT NULL,
-    change_id uuid NOT NULL,
+    change_id uuid,
     version_number integer NOT NULL,
     summary text NOT NULL,
     reason text NOT NULL,
@@ -277,6 +371,8 @@ CREATE TABLE public.decisions (
     superseded_by uuid,
     created_by uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
+    chat_turn_id uuid,
+    CONSTRAINT decisions_one_source CHECK (((change_id IS NULL) <> (chat_turn_id IS NULL))),
     CONSTRAINT decisions_reason_check CHECK ((btrim(reason) <> ''::text)),
     CONSTRAINT decisions_status_check CHECK ((status = ANY (ARRAY['active'::text, 'superseded'::text]))),
     CONSTRAINT decisions_summary_check CHECK ((btrim(summary) <> ''::text)),
@@ -296,6 +392,8 @@ CREATE TABLE public.documents (
     current_version integer DEFAULT 0 NOT NULL,
     created_by uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
+    chat_summary text DEFAULT ''::text NOT NULL,
+    chat_summary_through uuid,
     CONSTRAINT documents_current_version_check CHECK ((current_version >= 0)),
     CONSTRAINT documents_state_check CHECK ((state = ANY (ARRAY['draft'::text, 'in_review'::text, 'final'::text]))),
     CONSTRAINT documents_title_check CHECK ((btrim(title) <> ''::text))
@@ -355,6 +453,22 @@ ALTER TABLE ONLY public.versions ALTER COLUMN snapshot SET COMPRESSION lz4;
 
 
 --
+-- Name: ai_credentials ai_credentials_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_credentials
+    ADD CONSTRAINT ai_credentials_pkey PRIMARY KEY (product_id);
+
+
+--
+-- Name: ai_requests ai_requests_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_requests
+    ADD CONSTRAINT ai_requests_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: audit_events audit_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -384,6 +498,22 @@ ALTER TABLE ONLY public.blocks
 
 ALTER TABLE ONLY public.changes
     ADD CONSTRAINT changes_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: chat_turns chat_turns_id_document_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_turns
+    ADD CONSTRAINT chat_turns_id_document_id_key UNIQUE (id, document_id);
+
+
+--
+-- Name: chat_turns chat_turns_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_turns
+    ADD CONSTRAINT chat_turns_pkey PRIMARY KEY (id);
 
 
 --
@@ -475,6 +605,20 @@ ALTER TABLE ONLY public.versions
 
 
 --
+-- Name: ai_requests_product_created_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ai_requests_product_created_idx ON public.ai_requests USING btree (product_id, created_at);
+
+
+--
+-- Name: ai_requests_redaction_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ai_requests_redaction_idx ON public.ai_requests USING btree (created_at) WHERE (redacted_at IS NULL);
+
+
+--
 -- Name: audit_events_product_at_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -510,6 +654,13 @@ CREATE INDEX changes_pending_block_idx ON public.changes USING btree (block_id) 
 
 
 --
+-- Name: chat_turns_document_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX chat_turns_document_idx ON public.chat_turns USING btree (document_id, id);
+
+
+--
 -- Name: decisions_product_status_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -535,6 +686,46 @@ CREATE INDEX memberships_user_id_idx ON public.memberships USING btree (user_id)
 --
 
 CREATE TRIGGER memberships_keep_at_least_one_owner BEFORE DELETE OR UPDATE ON public.memberships FOR EACH ROW EXECUTE FUNCTION app.keep_at_least_one_owner();
+
+
+--
+-- Name: ai_credentials ai_credentials_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_credentials
+    ADD CONSTRAINT ai_credentials_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+
+
+--
+-- Name: ai_credentials ai_credentials_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_credentials
+    ADD CONSTRAINT ai_credentials_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.users(id);
+
+
+--
+-- Name: ai_requests ai_requests_document_id_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_requests
+    ADD CONSTRAINT ai_requests_document_id_product_id_fkey FOREIGN KEY (document_id, product_id) REFERENCES public.documents(id, product_id) ON DELETE CASCADE;
+
+
+--
+-- Name: ai_requests ai_requests_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_requests
+    ADD CONSTRAINT ai_requests_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+
+
+--
+-- Name: ai_requests ai_requests_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ai_requests
+    ADD CONSTRAINT ai_requests_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
 --
@@ -586,6 +777,14 @@ ALTER TABLE ONLY public.changes
 
 
 --
+-- Name: changes changes_chat_turn_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.changes
+    ADD CONSTRAINT changes_chat_turn_fk FOREIGN KEY (chat_turn_id, document_id) REFERENCES public.chat_turns(id, document_id);
+
+
+--
 -- Name: changes changes_decided_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -610,11 +809,35 @@ ALTER TABLE ONLY public.changes
 
 
 --
+-- Name: chat_turns chat_turns_author_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_turns
+    ADD CONSTRAINT chat_turns_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.users(id);
+
+
+--
+-- Name: chat_turns chat_turns_document_id_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_turns
+    ADD CONSTRAINT chat_turns_document_id_product_id_fkey FOREIGN KEY (document_id, product_id) REFERENCES public.documents(id, product_id) ON DELETE CASCADE;
+
+
+--
 -- Name: decisions decisions_change_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.decisions
     ADD CONSTRAINT decisions_change_id_fkey FOREIGN KEY (change_id) REFERENCES public.changes(id);
+
+
+--
+-- Name: decisions decisions_chat_turn_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.decisions
+    ADD CONSTRAINT decisions_chat_turn_fk FOREIGN KEY (chat_turn_id, document_id) REFERENCES public.chat_turns(id, document_id);
 
 
 --
@@ -647,6 +870,14 @@ ALTER TABLE ONLY public.decisions
 
 ALTER TABLE ONLY public.decisions
     ADD CONSTRAINT decisions_superseded_by_fkey FOREIGN KEY (superseded_by) REFERENCES public.decisions(id);
+
+
+--
+-- Name: documents documents_chat_summary_through_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.documents
+    ADD CONSTRAINT documents_chat_summary_through_fk FOREIGN KEY (chat_summary_through, id) REFERENCES public.chat_turns(id, document_id);
 
 
 --
@@ -703,6 +934,39 @@ ALTER TABLE ONLY public.versions
 
 ALTER TABLE ONLY public.versions
     ADD CONSTRAINT versions_document_id_product_id_fkey FOREIGN KEY (document_id, product_id) REFERENCES public.documents(id, product_id) ON DELETE CASCADE;
+
+
+--
+-- Name: ai_credentials; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.ai_credentials ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: ai_credentials ai_credentials_owners; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY ai_credentials_owners ON public.ai_credentials TO marky_user USING (app.is_owner(product_id)) WITH CHECK ((app.is_owner(product_id) AND (updated_by = app.current_user_id())));
+
+
+--
+-- Name: ai_requests; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.ai_requests ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: ai_requests ai_requests_insert_members; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY ai_requests_insert_members ON public.ai_requests FOR INSERT TO marky_user WITH CHECK ((app.is_member(product_id) AND (user_id = app.current_user_id())));
+
+
+--
+-- Name: ai_requests ai_requests_select_members; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY ai_requests_select_members ON public.ai_requests FOR SELECT TO marky_user USING (app.is_member(product_id));
 
 
 --
@@ -777,6 +1041,26 @@ CREATE POLICY changes_select_members ON public.changes FOR SELECT TO marky_user 
 --
 
 CREATE POLICY changes_update_owners ON public.changes FOR UPDATE TO marky_user USING (app.is_owner(product_id)) WITH CHECK ((app.is_owner(product_id) AND ((decided_by IS NULL) OR (decided_by = app.current_user_id()))));
+
+
+--
+-- Name: chat_turns; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.chat_turns ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: chat_turns chat_turns_insert_owners; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY chat_turns_insert_owners ON public.chat_turns FOR INSERT TO marky_user WITH CHECK ((app.is_owner(product_id) AND (author_id = app.current_user_id())));
+
+
+--
+-- Name: chat_turns chat_turns_select_members; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY chat_turns_select_members ON public.chat_turns FOR SELECT TO marky_user USING (app.is_member(product_id));
 
 
 --
@@ -942,4 +1226,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20261109130834'),
     ('20261109130836'),
     ('20261109140145'),
-    ('20261109142244');
+    ('20261109142244'),
+    ('20261109145924');

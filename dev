@@ -11,6 +11,8 @@ VERSIONS_FILE="versions.env"
 ENV_FILE=".env"
 ENV_TEMPLATE=".env.example"
 PASSWORD_PLACEHOLDER="__set_by_dev_init__"
+KEY32_PLACEHOLDER="__set_by_dev_init_key32__"   # 32-byte base64 key (AES-256)
+KEY32_BYTES=32
 PASSWORD_BYTES=24   # random password ki lambai (bytes); base64 ke baad ~32 characters
 
 # App ka DB login role. Source of truth: platform/db/migrations (roles migration). Ye naam wahan se match karna chahiye.
@@ -41,7 +43,9 @@ cmd_init() {
   umask 077   # nayi file sirf aap padh sako (600)
   local line
   while IFS= read -r line || [[ -n "$line" ]]; do
-    if [[ "$line" == *"$PASSWORD_PLACEHOLDER"* ]]; then
+    if [[ "$line" == *"$KEY32_PLACEHOLDER"* ]]; then
+      line="${line//$KEY32_PLACEHOLDER/$(head -c "$KEY32_BYTES" /dev/urandom | base64 -w0)}"
+    elif [[ "$line" == *"$PASSWORD_PLACEHOLDER"* ]]; then
       line="${line//$PASSWORD_PLACEHOLDER/$(random_secret)}"
     fi
     printf '%s\n' "$line"

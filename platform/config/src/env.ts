@@ -17,10 +17,22 @@ const VALKEY_URL_PROTOCOL = /^rediss?$/;
 
 const appEnvSchema = z.enum(APP_ENVS);
 
+/** AES-256 master key ki lambai (bytes). Format constant hai, tunable nahi (ADR 0025). */
+const AI_KEY_ENCRYPTION_KEY_BYTES = 32;
+const BASE64 = /^[A-Za-z0-9+/]+={0,2}$/;
+const masterKeySchema = z
+  .string()
+  .regex(BASE64, "must be base64")
+  .refine((v) => Buffer.from(v, "base64").length === AI_KEY_ENCRYPTION_KEY_BYTES, {
+    message: `must decode to exactly ${AI_KEY_ENCRYPTION_KEY_BYTES} bytes`,
+  });
+
 export const envSchema = z.object({
   APP_ENV: appEnvSchema,
   DATABASE_URL: z.url({ protocol: POSTGRES_URL_PROTOCOL }),
   VALKEY_URL: z.url({ protocol: VALKEY_URL_PROTOCOL }),
+  /** Teams ki AI API keys encrypt karne wali master key (base64, 32 bytes). ADR 0025. */
+  AI_KEY_ENCRYPTION_KEY: masterKeySchema,
 });
 // Note: `z.object` (strict nahi), kyunki process.env me PATH, HOME jaisi bahut si aur values hoti hain. Zod unhe chhod deta hai.
 

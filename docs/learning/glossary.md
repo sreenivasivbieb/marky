@@ -74,6 +74,19 @@ Har naya term jo project me aata hai, yahan simple bhasha me. Format: **Term**: 
 - **Round-trip property**: "X karo, phir ulta karo, to wahi milna chahiye" (edits → restore = original). *engine.test.ts*
 - **Interface vs type alias (TS)**: `type` alias me implicit index signature hota hai, `interface` me nahi, isliye JSON
   type (`{ [k: string]: … }`) me sirf `type` assign hota hai. *DocumentSnapshot*
+- **BYOK (Bring Your Own Key)**: app ka apna AI account nahi; har team apni provider API key deti hai aur kharcha unka. *ADR 0025*
+- **AES-256-GCM (authenticated encryption)**: data chhupata bhi hai (confidentiality) aur ek bit badalne par bhi pakadta hai
+  (integrity, auth tag se). *@marky/crypto*
+- **IV / nonce**: har encryption ke liye naya random number. Same key ke saath IV dobara use karna GCM ko tod deta hai. *secret-box.ts*
+- **AAD (associated data)**: encryption ke saath "bandha" hua data jo encrypt nahi hota par check hota hai. Hum product_id
+  daalte hain, to ciphertext doosre product me copy karke kaam nahi karta. *ADR 0025*
+- **Master key / key rotation**: saari team keys ek master key se encrypt hoti hain (env me). Rotation = nayi master key +
+  `key_version`, taaki purani keys bhi padhi ja sakein. *ai_credentials.key_version*
+- **Column-level GRANT**: role ko table ke sirf kuch columns ka access dena. Owner bhi `key_ciphertext` SELECT nahi kar
+  sakta; decrypt sirf SECURITY DEFINER function se. *ai_layer_core migration*
+- **Masked hint**: secret ka sirf chhota hissa dikhana ("…a1b2"), taaki pehchaan ho par secret na khule. *keyHint*
+- **Provider-agnostic / adapter**: app ka code ek neutral interface (ModelGateway) se baat karta hai; har provider (Anthropic,
+  OpenAI, Gemini) ka chhota "adapter" usse provider ke format me badalta hai. *ADR 0027*
 - **Drift**: do jagah rakhi ek hi cheez (DB CHECK aur TS list) ka dheere-dheere alag ho jaana. **Drift test** dono ko milata
   hai aur fark aate hi fail hota hai. *ADR 0021*
 - **Codegen override**: generated type ko kisi column ke liye apne type se badalna (`role: string` → `MembershipRole`). *ADR 0021*
