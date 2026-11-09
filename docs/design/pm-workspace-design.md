@@ -197,7 +197,7 @@ Recommended defaults (deviations ADRs me):
 | Files | S3-compatible object storage | Uploads, exported PDFs |
 | Auth | Auth.js ya Supabase Auth (**ADR 0001: Auth.js**) | Google + magic link bina password flows |
 | Email | Postmark ya Resend | Transactional email, baad me inbound reply parsing |
-| AI | Claude API, tool use + prompt caching | Structured edits as tool calls; repeated context sasta |
+| AI | **Provider-agnostic** (ADR 0027): team ki key wala provider (Anthropic / OpenAI / Gemini), native adapters, tool use (+ caching jahan provider de) | Structured edits as tool calls; koi vendor lock-in nahi |
 | Observability | OpenTelemetry, Sentry, structured logs | Click se query tak trace |
 
 ### Change engine (product ka core)
@@ -337,7 +337,7 @@ quarterly restore drill; blue-green/rolling deploy with auto rollback, migration
 har Phase 2 feature feature-flag ke peeche.
 
 **Cost control:** ~~weekly AI-cost-per-PM numbers aur NFR-19 alert~~ **hataya (ADR 0025, BYOK).** Team apni key ka usage
-(tokens + anumaanit cost) dekh sakti hai. Optional, baad me: team ka apna budget alert ("aaj $5 se zyada use hua").
+(sirf tokens, ADR 0027) dekh sakti hai. Optional, baad me: team ka apna budget alert ("aaj $5 se zyada use hua").
 
 ## 11. Security, permissions, AI safety
 

@@ -1,5 +1,5 @@
 # 0025. BYOK: team ki apni Anthropic API key (encrypted), token logging; spend cap hataya
-- Status: Accepted
+- Status: Accepted (amended by 0027: provider-agnostic, usage = tokens only)
 - Date: 2026-11-09
 - Deciders: user (faisla); implementation details AI ne li (neeche alag)
 - Type: **Design doc se deviation** (NFR-19, section 7 spend cap, section 10 cost control hataye; NFR-21 joda)

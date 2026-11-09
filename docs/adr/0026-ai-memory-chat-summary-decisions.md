@@ -1,5 +1,5 @@
 # 0026. AI memory: chat turns document ke saath, rolling summary, chat se decision ka sujhaav
-- Status: Accepted
+- Status: Accepted (amended by 0027: provider-agnostic, usage = tokens only)
 - Date: 2026-11-09
 - Deciders: user (faisla); implementation details AI ne li (neeche alag)
 - Type: **Design doc se deviation** (section 8 ka redaction rule badla)

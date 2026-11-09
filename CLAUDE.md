@@ -119,9 +119,9 @@ status strings, model names, rate limits) ke literal logic me nahi aayenge. Valu
   - **2c (done, ADR 0024; D61–D63):** `@marky/changes`: createDocument, proposeChange, acceptChanges, rejectChange,
     saveHumanEdit, proposeRestore + 19 engine tests (restore property test). `@marky/db/testing` export for other packages.
     Follow-up: 2-connection concurrency test.
-- **Step 3: AI layer** (D64–D71, ADR 0025 BYOK, ADR 0026 memory; Claude API: `claude-opus-5-5`, `@anthropic-ai/sdk` 1.x,
-  manual streaming tool loop, `fallbacks: "default"`). Teen hisse:
-  - **3a (next):** schema (`ai_credentials`, `ai_requests`, `chat_turns`, `documents.chat_summary`, decisions from chat)
+- **Step 3: AI layer** (D64–D76, ADR 0025 BYOK, 0026 memory, **0027 provider-agnostic**: native adapters for
+  Anthropic / OpenAI / Gemini behind our `ModelGateway`; owner chooses provider + model; usage = tokens only). Teen hisse:
+  - **3a (next):** schema (`ai_credentials` incl. provider + model, `ai_requests` (tokens, no cost), `chat_turns`, `documents.chat_summary`, decisions from chat)
     + key encryption module + RLS tests.
   - **3b:** `modules/ai` Draft orchestrator: context builder (decisions → summary → recent turns → document), `propose_change`
     tool → `@marky/changes`, usage ledger, timeouts/retries/circuit breaker, max iterations. Tests sirf fake gateway se;
