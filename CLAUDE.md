@@ -112,5 +112,8 @@ status strings, model names, rate limits) ke literal logic me nahi aayenge. Valu
     audit_events) + RLS + 11 value lists + `change-engine-schema.test.ts`.
   - **2b (done, ADR 0023):** `modules/documents`: block Zod schema (text runs), normalisation, canonical hash,
     `prepareBlock()` (validate → normalise → hash), fractional keys + property tests (`fast-check`).
-  - **2c (next):** `modules/changes`: propose / accept (doc row lock, hash re-check, apply, eager stale, version, audit,
+  - **2c (done, ADR 0024; D61–D63):** `@marky/changes`: createDocument, proposeChange, acceptChanges, rejectChange,
+    saveHumanEdit, proposeRestore + 19 engine tests (restore property test). `@marky/db/testing` export for other packages.
+    Follow-up: 2-connection concurrency test.
+  - _(purana plan, reference ke liye)_ **2c:** `modules/changes`: propose / accept (doc row lock, hash re-check, apply, eager stale, version, audit,
     decision) / reject / human edit. Restore (FR-20) + edit-then-accept (FR-12) ke design sawal user se poochhne hain.

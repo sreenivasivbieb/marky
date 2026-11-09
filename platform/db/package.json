@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Postgres access: Kysely client, actor/RLS transactions, generated types. Migrations: ./migrations (dbmate). ADR 0008, 0018, 0020.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./testing": "./src/testing/db.ts"
   },
   "scripts": {
     "db:types": "kysely-codegen --config-file .kysely-codegenrc.json"

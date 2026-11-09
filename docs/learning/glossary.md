@@ -65,6 +65,15 @@ Har naya term jo project me aata hai, yahan simple bhasha me. Format: **Term**: 
   karte waqt baaki rows nahi badalti. *ADR 0022*
 - **TOAST / lz4**: Postgres bade values ko alag store karke compress karta hai (TOAST). `lz4` ek fast compression algorithm hai. *versions.snapshot*
 - **Append-only**: sirf naye rows jud sakte hain, purane badle ya mitaye nahi ja sakte (audit log). *audit_events*
+- **Pessimistic vs optimistic locking**: pessimistic = pehle lock lo, phir kaam (`SELECT … FOR UPDATE`, document par);
+  optimistic = bina lock kaam karo, end me check karo ki kisi ne beech me badla to nahi (block `hash` / stale). Engine
+  dono use karta hai. *ADR 0024*
+- **Stale**: jis purane state par proposal bana tha, wo ab badal chuka hai, to proposal "baasi" ho gaya. *D58*
+- **Atomic unit of work**: kai DB kaam jo ek transaction me hote hain, sab ya kuch nahi (accept = block + version + audit
+  + decision). *acceptChanges*
+- **Round-trip property**: "X karo, phir ulta karo, to wahi milna chahiye" (edits → restore = original). *engine.test.ts*
+- **Interface vs type alias (TS)**: `type` alias me implicit index signature hota hai, `interface` me nahi, isliye JSON
+  type (`{ [k: string]: … }`) me sirf `type` assign hota hai. *DocumentSnapshot*
 - **Drift**: do jagah rakhi ek hi cheez (DB CHECK aur TS list) ka dheere-dheere alag ho jaana. **Drift test** dono ko milata
   hai aur fark aate hi fail hota hai. *ADR 0021*
 - **Codegen override**: generated type ko kisi column ke liye apne type se badalna (`role: string` → `MembershipRole`). *ADR 0021*

@@ -246,7 +246,10 @@ CREATE TABLE public.changes (
     decided_at timestamp with time zone,
     decision_note text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
+    accepted_after jsonb,
+    restore_of_version integer,
     CONSTRAINT changes_accepted_add_has_block CHECK ((NOT ((op = 'add'::text) AND (status = 'accepted'::text) AND (block_id IS NULL)))),
+    CONSTRAINT changes_accepted_after_shape CHECK (((accepted_after IS NULL) OR ((status = 'accepted'::text) AND (op = ANY (ARRAY['add'::text, 'edit'::text]))))),
     CONSTRAINT changes_accepted_has_version CHECK (((status = 'accepted'::text) = (resulting_version IS NOT NULL))),
     CONSTRAINT changes_author_type_check CHECK ((author_type = ANY (ARRAY['ai'::text, 'user'::text]))),
     CONSTRAINT changes_base_version_check CHECK ((base_version >= 0)),
@@ -599,6 +602,14 @@ ALTER TABLE ONLY public.changes
 
 
 --
+-- Name: changes changes_restore_version_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.changes
+    ADD CONSTRAINT changes_restore_version_fk FOREIGN KEY (document_id, restore_of_version) REFERENCES public.versions(document_id, number);
+
+
+--
 -- Name: decisions decisions_change_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -930,4 +941,5 @@ CREATE POLICY versions_select_members ON public.versions FOR SELECT TO marky_use
 INSERT INTO public.schema_migrations (version) VALUES
     ('20261109130834'),
     ('20261109130836'),
-    ('20261109140145');
+    ('20261109140145'),
+    ('20261109142244');

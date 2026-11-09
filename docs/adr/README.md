@@ -52,3 +52,4 @@ ya jab design doc se hatke kuch karte hain (deviation).
 | 0021 | [Typed value lists + drift test](0021-typed-value-lists-and-drift-test.md) | Accepted |
 | 0022 | [Change engine design (schema + model)](0022-change-engine-design.md) | Accepted |
 | 0023 | [Block content model](0023-block-content-model.md) | Accepted |
+| 0024 | [Change engine operations](0024-change-engine-operations.md) | Accepted |

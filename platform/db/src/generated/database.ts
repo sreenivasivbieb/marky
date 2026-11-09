@@ -50,6 +50,7 @@ export interface Blocks {
 }
 
 export interface Changes {
+  accepted_after: Json | null;
   after: Json | null;
   anchor_block_id: string | null;
   author_id: string;
@@ -67,6 +68,7 @@ export interface Changes {
   op: ChangeOp;
   product_id: string;
   reason: string;
+  restore_of_version: number | null;
   resulting_version: number | null;
   status: Generated<ChangeStatus>;
 }
