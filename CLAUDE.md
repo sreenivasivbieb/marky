@@ -73,6 +73,10 @@ status strings, model names, rate limits) ke literal logic me nahi aayenge. Valu
 - Tenant isolation database (RLS) me enforce hoga; har API route role + tenant check karega.
 - Share token 128-bit random, sirf hash store; revoke/expiry par content expose nahi.
 - Customer content model training me use nahi hoga.
+- **BYOK (ADR 0025):** team ki Anthropic API key encrypted (AES-256-GCM) store hoti hai; log, error message, audit metadata
+  ya browser me **kabhi nahi**; sirf Owner set/replace/delete kare, aur use sirf masked hint dikhe. Daily spend cap nahi hai.
+- **AI memory (ADR 0026):** decisions = sabse bada memory source; chat_turns + rolling summary document ke saath rehte hain;
+  sirf raw AI request logs 30 din me redact hote hain.
 
 ## 6. Kaam ka tareeka
 
@@ -115,5 +119,13 @@ status strings, model names, rate limits) ke literal logic me nahi aayenge. Valu
   - **2c (done, ADR 0024; D61–D63):** `@marky/changes`: createDocument, proposeChange, acceptChanges, rejectChange,
     saveHumanEdit, proposeRestore + 19 engine tests (restore property test). `@marky/db/testing` export for other packages.
     Follow-up: 2-connection concurrency test.
+- **Step 3: AI layer** (D64–D71, ADR 0025 BYOK, ADR 0026 memory; Claude API: `claude-opus-5-5`, `@anthropic-ai/sdk` 1.x,
+  manual streaming tool loop, `fallbacks: "default"`). Teen hisse:
+  - **3a (next):** schema (`ai_credentials`, `ai_requests`, `chat_turns`, `documents.chat_summary`, decisions from chat)
+    + key encryption module + RLS tests.
+  - **3b:** `modules/ai` Draft orchestrator: context builder (decisions → summary → recent turns → document), `propose_change`
+    tool → `@marky/changes`, usage ledger, timeouts/retries/circuit breaker, max iterations. Tests sirf fake gateway se;
+    **asli API call user ki permission ke bina nahi** (paisa lagta hai).
+  - **3c:** `suggest_decision` tool + save-as-decision, rolling summary update.
   - _(purana plan, reference ke liye)_ **2c:** `modules/changes`: propose / accept (doc row lock, hash re-check, apply, eager stale, version, audit,
     decision) / reject / human edit. Restore (FR-20) + edit-then-accept (FR-12) ke design sawal user se poochhne hain.

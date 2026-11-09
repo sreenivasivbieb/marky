@@ -53,3 +53,5 @@ ya jab design doc se hatke kuch karte hain (deviation).
 | 0022 | [Change engine design (schema + model)](0022-change-engine-design.md) | Accepted |
 | 0023 | [Block content model](0023-block-content-model.md) | Accepted |
 | 0024 | [Change engine operations](0024-change-engine-operations.md) | Accepted |
+| 0025 | [BYOK API key + usage logging (spend cap removed)](0025-byok-api-key-and-usage-logging.md) | Accepted |
+| 0026 | [AI memory: chat turns, rolling summary, chat decisions](0026-ai-memory-chat-summary-decisions.md) | Accepted |

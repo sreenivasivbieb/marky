@@ -1,6 +1,7 @@
 # PM Workspace (Marky): Product Design & Engineering Doc
 
-> Ye original Google design doc (2026-11-09, author: project owner) ki repo copy hai. Ise **source of truth** maano.
+> Ye original Google design doc (2026-11-09, author: project owner) ki repo copy hai; isme user ke baad ke faisle bhi
+> laagu hain (BYOK + AI memory: ADR 0025, 0026). Ise **source of truth** maano.
 > Original doc ke 3 diagrams (project lifecycle, document state/Change lifecycle, system architecture) image the aur
 > copy nahi hue; unka text-wala content neeche hai. Is project ke deviations `docs/adr/` me hain. Agar yahan aur kisi ADR me
 > fark ho, to **ADR jeetta hai** (wo baad ka, approved faisla hai).
@@ -149,13 +150,14 @@ MVP ke starting targets hain; pehli 50 active teams ke baad revisit karne hain. 
 | Privacy | NFR-14 | Request par product + saara data delete | 30 din me; backups 35 din me purge |
 | Accessibility | NFR-15 | Editor + share view WCAG 2.2 AA | Keyboard-only flow chale |
 | Compatibility | NFR-16 | Chrome/Safari/Edge/Firefox ke latest 2; share view ke liye mobile Safari/Chrome | Har release test |
-| Observability | NFR-17 | Browser se DB tak har request ka trace ID; AI calls token counts ke saath log | 100% requests |
+| Observability | NFR-17 | Browser se DB tak har request ka trace ID; AI calls token counts ke saath log (debugging + user ko "kitna use hua" dikhana) | 100% requests |
 | Maintainability | NFR-18 | Change engine + permissions par automated tests | ≥ 90% line coverage |
-| Cost | NFR-19 | Per active PM per month AI cost | Plan price ka < 20% |
+| ~~Cost~~ | ~~NFR-19~~ | **Hataya (2026-11-09, ADR 0025):** teams apni Anthropic API key laati hain (BYOK), AI ka kharcha unka hai | — |
 | Scalability | NFR-20 | Section 10 ke stage targets | Section 10 |
+| Security | NFR-21 | Team ki Anthropic API key (ADR 0025) | AES-256-GCM se encrypted at rest; logs, errors aur browser me kabhi nahi; sirf Owner set / replace / delete kare aur sirf masked hint (aakhri 4 characters) dekhe |
 
 **Rules:** har API route data chhoone se pehle role + tenant check kare ("trusted internal" route koi nahi); har AI call par
-timeout, retry limit aur per-workspace spend cap ho; real-time sync wala har feature Phase 2 hai aur MVP ko block nahi karega.
+timeout aur retry limit ho (spend cap hataya, ADR 0025); real-time sync wala har feature Phase 2 hai aur MVP ko block nahi karega.
 
 ## 6. System architecture
 
@@ -209,9 +211,12 @@ Recommended defaults (deviations ADRs me):
 ### AI agent design
 - **Har request me context:** template + failure checks, document outline, edit ho rahe sections, active decisions, @mentioned files.
   Poori chat history ya saare documents kabhi nahi.
+- **Chat memory (ADR 0026):** chat turns document ke saath save hote hain; AI ko aakhri kuch turns + document ka **rolling summary**
+  jaata hai. Chat me koi faisla dikhe ("ye Q2 me nahi karenge") to AI use **decision ke roop me save** karne ka sujhaav deta hai
+  (ek click). **Decisions = memory ka sabse bada source.**
 - **Modes:** Draft = Changes + sawal; Align = plus comment-resolving Changes; Ship = sirf Handoff Pack. Har mode ka alag system prompt aur tool list.
 - **Permissions:** AI request shuru karne wale insaan ke rights se chalta hai. Final mark, publish, roles change ya approve nahi kar sakta.
-- **Safety rails:** tool arguments JSON schema se check; invalid call drop aur ek baar retry; per-workspace daily spend cap.
+- **Safety rails:** tool arguments JSON schema se check; invalid call drop aur ek baar retry; ek turn me max tool iterations (runaway loop se team ki key bachane ke liye).
 - **Decision memory bina vector DB:** active decisions (aam taur par < 2,000 tokens) har prompt me inject. Retrieval sirf ~200+ decisions par.
 
 ### Sharing, comments, approvals
@@ -269,7 +274,8 @@ approvals; comment par email job) → Resolve (AI comment IDs se jude Changes; a
 ne current version approve kiya → final; export) → Learn (active decisions future prompts me; superseded hata diye jaate hain).
 
 **Data rules:** `blocks` = working draft, `versions.snapshot` = history; version kabhi edit nahi. Versions + audit events product
-ki life tak; AI request logs 30 din baad delete (content redacted, token counts rakhe). Product delete = 30 din soft-delete,
+ki life tak; raw AI request logs (poora prompt text) 30 din baad redact (token counts rakhe); `chat_turns` aur rolling summary
+document ka hissa hain, document ke saath rehte hain, redact nahi hote (ADR 0026). Product delete = 30 din soft-delete,
 phir job rows + files hatata hai; backups 35 din me expire. Analytics events alag table me, document text ke bina.
 
 ## 9. Design implementation
@@ -319,19 +325,19 @@ ek Change). Ek modest deployment pehle 10,000 active PMs sambhale. Saare numbers
 | 3. Collaboration | ≤ 100,000 | Yjs over WebSockets (doc ID se sharded); Redis pub/sub; search index; audit_events monthly partition | Postgres write load > 50% |
 | 4. Enterprise | > 100,000 | Per-region; bade customers ke dedicated schemas/DBs; SSO, audit export, data residency | Contract/regulation isolation maange |
 
-**Bottlenecks → fixes:** model latency/cost → streaming, stable prompt prefix cache, chhote kaam chhote model par, daily cap, rate
+**Bottlenecks → fixes:** model latency/cost → streaming, stable prompt prefix cache, chhote kaam chhote model par, rate
 limit ke paas queue. Hot share reads → CDN par version-keyed cached snapshot, comments alag API, naye version par purge.
 DB growth → indexes (document_id, position), (document_id, status), (product_id, status); audit/AI logs monthly partition;
 12 mahine purane versions sasti storage me. Email volume → daily digest default; mentions + approval requests turant; retries + DLQ.
 Export spikes → alag autoscaled worker pool; PDF per version cache. Retries → accept/approve/export par idempotency keys.
-Noisy neighbours → per-product AI/export rate limits, plan quotas.
+Noisy neighbours → per-product export rate limits; AI ki rate limit team ki apni key par lagti hai (ADR 0025).
 
 **Reliability:** model API par timeouts + circuit breaker ("AI is unavailable", baaki sab chale); continuous backup + PITR,
 quarterly restore drill; blue-green/rolling deploy with auto rollback, migrations ek release tak backward compatible;
 har Phase 2 feature feature-flag ke peeche.
 
-**Cost control:** har workspace ke liye weekly teen numbers: AI cost per active PM, storage per document, email volume.
-AI cost per PM plan price ke 20% se upar jaaye to alert (NFR-19).
+**Cost control:** ~~weekly AI-cost-per-PM numbers aur NFR-19 alert~~ **hataya (ADR 0025, BYOK).** Team apni key ka usage
+(tokens + anumaanit cost) dekh sakti hai. Optional, baad me: team ka apna budget alert ("aaj $5 se zyada use hua").
 
 ## 11. Security, permissions, AI safety
 
@@ -359,6 +365,7 @@ Fixed rules: sirf Owner publish/final kare; final ke liye har listed approver ch
 | Uploaded file attacks | Type/size limits, worker me virus scan, app ke domain se kabhi serve nahi |
 | Insider access | Support reads ka audit log; time-limited break-glass role |
 | Model provider data use | No-training setting, third-party logs me content nahi, 30 din baad AI logs redact |
+| Team ki API key leak (ADR 0025) | AES-256-GCM encrypted at rest (master key env me); logs/errors/browser me kabhi nahi; sirf masked hint; sirf Owner badal sake; har badlaav audit log me |
 
 **Compliance path:** encryption, access logs, backups, privacy policy se shuru; pehli paying team maange to SOC 2 Type I;
 Stage 4 me SSO, audit export, data residency.
@@ -375,7 +382,6 @@ Validation ke baad 4 logon ki team ~4 hafte me MVP bana sakti hai (full-stack le
 | Stakeholder response | 3 din me ≥1 external comment wale shared docs | 60% |
 | Decision capture | Shared doc par decision-flagged accepted Changes | ≥ 2 |
 | Week-4 retention | 4 hafte me doosra doc banane wale activated PMs | 30% |
-| AI cost per active PM | Model spend / weekly active PMs | Plan price ka < 20% |
 
 **Testing:** change engine par unit + property tests (accept phir restore = original; ek block par do accept kabhi dono apply nahi);
 har role × action ka permission test + cross-tenant read test jo fail hona chahiye; AI eval set (30 realistic PRD tasks: valid tool
@@ -390,7 +396,7 @@ release par accessibility audit.
 | AI kharab edits propose kare | Trust loss | Har Change par human accept; eval set; har Change ka reason |
 | Inline-changes editor mushkil nikle | Schedule slip | Block-level changes, single editor lock, MVP me real-time nahi |
 | Anonymous links abuse/leak | Data exposure, spam | Hashed tokens, expiry, revoke, rate limits, email verification |
-| Model cost revenue se tez badhe | Negative margin | Prompt caching, chhota model, spend caps, quotas |
+| Runaway AI loop team ki key ka bill badhaye (BYOK) | User ka nuksaan, trust loss | Max tool iterations per turn, prompt caching, usage view, optional budget alert |
 | Decision Log graveyard ban jaaye | Feature ignored | Status + supersede, AI contradiction warnings, weekly digest |
 
 **Open questions:** pricing (per PM seat / per product / per active document)? MVP me ek product ke ek se zyada Owner ho sakte hain?
