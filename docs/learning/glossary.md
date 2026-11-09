@@ -53,6 +53,14 @@ Har naya term jo project me aata hai, yahan simple bhasha me. Format: **Term**: 
 - **Integration test**: asli DB/service ke saath test (unit test me sab fake hota hai). *rls.test.ts*
 - **Mutation probe**: code/DB me jaan-boojh kar bug daalo (jaise RLS off) aur dekho ki tests fail hote hain ya nahi.
   Isse pata chalta hai ki tests sach me kuch check kar rahe hain. *Step 1c*
+- **Drift**: do jagah rakhi ek hi cheez (DB CHECK aur TS list) ka dheere-dheere alag ho jaana. **Drift test** dono ko milata
+  hai aur fark aate hi fail hota hai. *ADR 0021*
+- **Codegen override**: generated type ko kisi column ke liye apne type se badalna (`role: string` → `MembershipRole`). *ADR 0021*
+- **Undeclared (phantom) dependency**: package koi library use kare par apni dependency list me na likhe. Tab Node folders me
+  upar dhoondhte hue jo bhi version mil jaaye wahi le leta hai (yahan galat TS 7). *ADR 0021*
+- **pnpm `packageExtensions`**: kisi third-party package ki dependency list me bahar se entry jodna, uska code chhuye bina. *ADR 0021*
+- **Silent failure**: error aaye par tool chupchaap fallback kar le aur success dikhaye ("✓ generated"). Sabse khatarnaak
+  bug type, isliye output ka asli content check karo, sirf success message nahi. *ADR 0021*
 - **Schema dump**: poore DB structure ki ek SQL file, jo migrations ke baad ka final result dikhati hai. *ADR 0020*
 - **Connection pool**: pehle se khule DB connections ka set jo requests me reuse hota hai (naya connection banana mehenga hai). *client.ts*
 - **ORM (Object-Relational Mapper)**: library jo tables ko classes/objects jaisa dikhati hai aur SQL khud likhti hai.

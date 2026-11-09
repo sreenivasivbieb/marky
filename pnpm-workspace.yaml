@@ -9,3 +9,12 @@ storeDir: ./.pnpm-store
 
 # `pnpm add` exact version likhe (`4.6.7`), `^4.6.7` jaisi range nahi (ADR 0016).
 savePrefix: ""
+
+# Third-party packages ki missing dependencies yahan "jodte" hain.
+# kysely-codegen type overrides parse karne ke liye `typescript` ka JS API use karta hai, par use dependency ki tarah
+# declare nahi karta. Isliye wo root ka TypeScript 7 utha leta hai (native Go compiler, jisme JS API nahi hai), aur
+# overrides ke imports chupchaap gayab ho jaate hain. Isliye use JS-API wala TypeScript 5.9 de rahe hain (ADR 0021).
+packageExtensions:
+  kysely-codegen:
+    dependencies:
+      typescript: "5.9.3"

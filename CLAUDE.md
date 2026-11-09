@@ -30,7 +30,12 @@ User is project ko banate hue **seekhna** chahta hai. Isliye:
 1. **Structured aur step-by-step.** Ek baar me ek step. Har step ke end par ruko, kya bana batao, user ka OK lo, tab aage badho.
 2. **Har design decision user ke saath discuss hoga — implement karne se pehle.** Options, trade-offs aur apni recommendation
    do (AskUserQuestion use karo). User approve kare tab hi code likho.
-3. **Doubt ho to khud decision mat lo.** Scenario user ke saamne rakho ("agar X ho to Y ya Z?") aur jawab ka wait karo.
+   **Kya poochhna hai, kya nahi (user ka rule, 2026-11-09):** sirf **design sawal** poochho, jo aage project me alag-alag
+   jagah asar daalenge: data model, security/permissions, module boundaries, architecture trade-offs, product behaviour.
+   **Basic / initialization sawal mat poochho:** folder/file naam, tool install method, git init/commit/push,
+   versions, ports, wrapper commands jaisi cheezein. Inme sensible default lo, `DECISIONS.md` ke "AI ne khud chuna" me
+   likho, aur report me ek line me batao.
+3. **Doubt ho to khud decision mat lo** (design sawal par). Scenario user ke saamne rakho ("agar X ho to Y ya Z?") aur jawab ka wait karo.
    "Sensible default" ke naam par chupke se choice mat karo — library, schema column, naming, folder structure, sab par lagu.
 4. **Approved decision ko record karo** ek ADR me (`docs/adr/NNNN-title.md`: context, decision, consequences, status),
    user ke words/reason ke saath. Design doc ki baat badalni ho (deviation) to wo bhi ADR me, user ki approval ke saath.
@@ -94,11 +99,12 @@ status strings, model names, rate limits) ke literal logic me nahi aayenge. Valu
 - **Step 1c (tenancy core + RLS) bana aur verify hua** (ADR 0018–0020): `@marky/db` (Kysely + pg, `withActor`),
   migrations `platform/db/migrations/`, roles marky_app/marky_user/marky_guest, users/products/memberships + RLS,
   `./dev test` (marky_test DB, rollback per test), `./dev db bootstrap`. 40/40 tests + RLS mutation probe.
-- Git: Step 1b tak pushed (`d1a6faf`). Step 1c abhi uncommitted. Repo-local git email = GitHub noreply.
+- **Step 1d (typed value lists) bana** (ADR 0021): `platform/db/src/value-lists.ts` + codegen overrides + drift test.
+  Naya text+CHECK column = migration + value-lists + `.kysely-codegenrc.json` + `db:types`.
+- Git: Step 1d tak pushed. Repo-local git email = GitHub noreply. `DECISIONS.md` local-only (rule 8).
 - Provisional (user ne inhe as-is commit karwaya, revisit pending): dev me Valkey bina password ke;
   healthcheck timing compose ke `x-dev-tunables` me. (Schema dump ab ON hai, ADR 0020.)
-- Open, user se poochhna hai: `memberships.role` jaise text+CHECK columns ka TS type codegen me `string` aata hai (ADR 0019).
 - Guest (share link) DB access design: sharing step me (ADR 0018).
 - Phase 0 ka koi kaam nahi hoga (ADR 0014).
-- Next: user ke saath tay karna hai. Candidates: role type-gap ka fix; Step 2 (change engine: documents, blocks,
-  versions, changes); Auth step (Auth.js + users insert). Code se pehle design discuss karo.
+- Next (user ne chuna, D49): **Step 2: Change engine** (documents, blocks, versions, changes, audit; accept = ek
+  transaction). Code se pehle design sawal user se discuss karo.

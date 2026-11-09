@@ -3,6 +3,7 @@
  * Please do not edit it manually.
  */
 
+import type { MembershipRole, ProductPlan } from "../value-lists.ts";
 import type { ColumnType } from "kysely";
 
 export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
@@ -14,7 +15,7 @@ export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 export interface Memberships {
   created_at: Generated<Timestamp>;
   product_id: string;
-  role: string;
+  role: MembershipRole;
   user_id: string;
 }
 
@@ -24,7 +25,7 @@ export interface Products {
   created_by: string;
   id: Generated<string>;
   name: string;
-  plan: Generated<string>;
+  plan: Generated<ProductPlan>;
 }
 
 export interface Users {

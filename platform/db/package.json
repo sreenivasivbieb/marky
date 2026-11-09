@@ -8,7 +8,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "db:types": "kysely-codegen --dialect postgres --url \"$MIGRATION_DATABASE_URL\" --exclude-pattern 'public.schema_migrations' --out-file src/generated/database.ts"
+    "db:types": "kysely-codegen --config-file .kysely-codegenrc.json"
   },
   "dependencies": {
     "kysely": "0.29.8",

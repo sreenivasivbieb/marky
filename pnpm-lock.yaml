@@ -4,6 +4,8 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+packageExtensionsChecksum: sha256-LZ2D2QQvS5KM1ue08nE4+rwDXvW1Daq+LLLpZM5Qh7A=
+
 importers:
 
   .:
@@ -38,7 +40,7 @@ importers:
         version: 8.23.1
       kysely-codegen:
         specifier: 0.20.0
-        version: 0.20.0(kysely@0.29.8)(pg@8.23.1)(typescript@7.0.2)
+        version: 0.20.0(kysely@0.29.8)(pg@8.23.1)
       zod:
         specifier: 4.6.7
         version: 4.6.7
@@ -689,6 +691,11 @@ packages:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
     engines: {node: '>=8.0'}
 
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   typescript@7.0.2:
     resolution: {integrity: sha512-8FYau96o3NKOhbjKi/qNvG/W5jhzxkbdm5sj9AbZ/5T5sWqn3hJgLfGx27sRKZWTvyzCP8dLRBTf5tBTSRVUNA==}
     engines: {node: '>=16.20.0'}
@@ -978,14 +985,14 @@ snapshots:
 
   color-name@1.1.4: {}
 
-  cosmiconfig@9.0.2(typescript@7.0.2):
+  cosmiconfig@9.0.2(typescript@5.9.3):
     dependencies:
       env-paths: 2.2.1
       import-fresh: 3.3.1
       js-yaml: 4.3.2
       parse-json: 5.2.0
     optionalDependencies:
-      typescript: 7.0.2
+      typescript: 5.9.3
 
   detect-libc@2.1.2: {}
 
@@ -1043,10 +1050,10 @@ snapshots:
 
   json-parse-even-better-errors@2.3.1: {}
 
-  kysely-codegen@0.20.0(kysely@0.29.8)(pg@8.23.1)(typescript@7.0.2):
+  kysely-codegen@0.20.0(kysely@0.29.8)(pg@8.23.1):
     dependencies:
       chalk: 4.1.2
-      cosmiconfig: 9.0.2(typescript@7.0.2)
+      cosmiconfig: 9.0.2(typescript@5.9.3)
       diff: 8.0.4
       dotenv: 17.4.2
       dotenv-expand: 12.0.3
@@ -1054,11 +1061,10 @@ snapshots:
       micromatch: 4.0.8
       minimist: 1.2.8
       pluralize: 8.0.0
+      typescript: 5.9.3
       zod: 4.6.7
     optionalDependencies:
       pg: 8.23.1
-    transitivePeerDependencies:
-      - typescript
 
   kysely@0.29.8: {}
 
@@ -1243,6 +1249,8 @@ snapshots:
   to-regex-range@5.0.1:
     dependencies:
       is-number: 7.0.0
+
+  typescript@5.9.3: {}
 
   typescript@7.0.2:
     optionalDependencies:

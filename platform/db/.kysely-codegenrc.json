@@ -1,0 +1,16 @@
+{
+  "dialect": "postgres",
+  "url": "env(MIGRATION_DATABASE_URL)",
+  "outFile": "src/generated/database.ts",
+  "excludePattern": "public.schema_migrations",
+  "customImports": {
+    "MembershipRole": "../value-lists.ts",
+    "ProductPlan": "../value-lists.ts"
+  },
+  "overrides": {
+    "columns": {
+      "memberships.role": "MembershipRole",
+      "products.plan": "Generated<ProductPlan>"
+    }
+  }
+}
