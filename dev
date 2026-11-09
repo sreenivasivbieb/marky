@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+# ./dev: Marky ka dev wrapper (ADR 0005, 0015).
+# Host par sirf docker + git chahiye. Har tool (node, pnpm, psql, dbmate) container ke andar chalta hai.
+
+set -euo pipefail   # error par ruko (-e), undefined variable = error (-u), pipe ka koi bhi fail = fail (pipefail)
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$ROOT"
+
+VERSIONS_FILE="versions.env"
+ENV_FILE=".env"
+ENV_TEMPLATE=".env.example"
+PASSWORD_PLACEHOLDER="__set_by_dev_init__"
+PASSWORD_BYTES=24   # random password ki lambai (bytes); base64 ke baad ~32 characters
+
+# Container host user ki UID:GID se chale, taaki bani hui files aapki hon, root ki nahi.
+HOST_UID="$(id -u)"
+HOST_GID="$(id -g)"
+export HOST_UID HOST_GID
+
+die() { echo "dev: $*" >&2; exit 1; }
+
+compose() {
+  [[ -f "$ENV_FILE" ]] || die "$ENV_FILE nahi mila. Pehle './dev init' chalao."
+  docker compose --env-file "$VERSIONS_FILE" --env-file "$ENV_FILE" "$@"
+}
+
+# Terminal interactive ho to TTY do, warna (scripts/CI me) -T.
+exec_flags() { if [[ -t 0 && -t 1 ]]; then echo ""; else echo "-T"; fi; }
+
+cmd_init() {
+  if [[ -f "$ENV_FILE" ]]; then
+    echo "$ENV_FILE pehle se hai; kuch nahi badla."
+    return
+  fi
+  local password
+  password="$(head -c "$PASSWORD_BYTES" /dev/urandom | base64 | tr -d '/+=\n')"
+  sed "s|$PASSWORD_PLACEHOLDER|$password|" "$ENV_TEMPLATE" > "$ENV_FILE"
+  chmod 600 "$ENV_FILE"
+  echo "$ENV_FILE bana diya (random DB password ke saath). Ab './dev up' chalao."
+}
+
+cmd_help() {
+  cat <<'EOF'
+Usage: ./dev <command> [args]
+
+Setup
+  init                 .env.example se .env banao (random DB password)
+  up                   sab services build + start karo (healthy hone tak wait)
+  down                 services band karo (data volumes bache rehte hain)
+  reset                services band + DB/Valkey data DELETE (confirm poochhega)
+  ps | logs [svc]      status / logs dekho
+
+Code
+  pnpm <args>          dev container me pnpm   (jaise: ./dev pnpm install)
+  run <cmd...>         dev container me koi bhi command
+  sh                   dev container ka shell
+
+Database
+  db <dbmate args>     migrations (jaise: ./dev db new create_products | up | rollback | status)
+  psql [args]          Postgres shell
+  valkey-cli [args]    Valkey shell
+EOF
+}
+
+main() {
+  local cmd="${1:-help}"
+  shift || true
+  case "$cmd" in
+    init)        cmd_init ;;
+    up)          compose up --detach --build --wait ;;
+    down)        compose down ;;
+    reset)
+      read -r -p "Saara local DB + Valkey data delete hoga. Pakka? (yes/no) " answer
+      [[ "$answer" == "yes" ]] || die "cancel kiya"
+      compose down --volumes ;;
+    ps)          compose ps ;;
+    logs)        compose logs --follow "$@" ;;
+    pnpm)        compose exec $(exec_flags) dev pnpm "$@" ;;
+    run)         compose exec $(exec_flags) dev "$@" ;;
+    sh)          compose exec dev bash ;;
+    db)          compose run --rm dbmate "$@" ;;
+    psql)        compose exec $(exec_flags) postgres sh -c 'exec psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" "$@"' psql "$@" ;;
+    valkey-cli)  compose exec $(exec_flags) valkey valkey-cli "$@" ;;
+    help|-h|--help) cmd_help ;;
+    *)           cmd_help; die "unknown command: $cmd" ;;
+  esac
+}
+
+main "$@"

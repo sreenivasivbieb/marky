@@ -83,6 +83,11 @@ status strings, model names, rate limits) ke literal logic me nahi aayenge. Valu
 - Machine: Docker 29 + Compose, git, gh (logged in as `sreenivasivbieb`). Host ka Node/pnpm is project ke liye use **nahi**
   hota; sab `dev` container me (ADR 0005).
 - User ka editor: VS Code / Cursor.
-- Step 1 ke saare foundation decisions ho gaye. Next: **Step 1a: dev environment code** (Dockerfile, docker-compose.yml,
-  `./dev` wrapper, `.env.example`, pnpm workspace root). Isme ke chhote decisions (ports, wrapper commands waghera) pehle user se poochho.
+- **Step 1a (dev environment) bana aur verify hua** (ADR 0015): `./dev init|up` → node 26.13.0, pnpm 12.18.0,
+  Postgres 18.6, Valkey 9.1.3, dbmate 2.38.0, sab host UID 1000 se chalte hain. Commands ke liye `./dev help` dekho.
+- Git: commit `3405bb6` (docs) ho chuka hai; Step 1a ki files abhi uncommitted hain. Push abhi tak nahi hua.
+  Repo-local git email = GitHub noreply.
+- Provisional, user review pending: dev me Valkey bina password ke; dbmate schema dump off.
 - Phase 0 ka koi kaam nahi hoga (ADR 0014).
+- Next: **Step 1b: config modules** (`platform/config`: env loader + tunables, dono alag Zod schema; ADR 0003),
+  phir **Step 1c: pehli migrations + RLS design** (guest/stakeholder context ke saath). Dono se pehle design user se discuss karo.

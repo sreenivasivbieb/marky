@@ -1,0 +1,7 @@
+{
+  "name": "marky",
+  "private": true,
+  "type": "module",
+  "description": "PM Workspace: Cursor for PRDs (learning project). Saari commands ./dev se chalao.",
+  "scripts": {}
+}

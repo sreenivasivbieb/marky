@@ -60,6 +60,20 @@ Har naya term jo project me aata hai, yahan simple bhasha me. Format: **Term**: 
 - **Docker Compose**: ek YAML file jisme kai containers (dev, postgres, redis) ek saath define aur start hote hain. *ADR 0005*
 - **Bind mount**: host ka folder container ke andar dikhana. Ek taraf file badlo, doosri taraf turant dikhti hai. *ADR 0005*
 - **UID / GID**: Linux me user aur group ka number. Container isi se chale to banai gayi files aapki hoti hain, root ki nahi. *ADR 0005*
+- **Healthcheck**: container ke andar baar-baar chalne waala chhota test (jaise `pg_isready`). Pass ho to service
+  "healthy" hai; doosri services tab tak ruk sakti hain (`depends_on: condition: service_healthy`). *docker-compose.yml*
+- **`docker compose exec` vs `run`**: `exec` pehle se chal rahe container me command chalata hai (fast); `run` naya container
+  banata hai (`--rm` = khatam hote hi hata do). Hum `dev` ke liye exec aur `dbmate` ke liye run use karte hain. *ADR 0015*
+- **Named volume**: Docker ka managed storage (jaise `postgres-data`). Container hat jaaye tab bhi data bacha rehta hai;
+  `./dev reset` ise delete karta hai. *docker-compose.yml*
+- **Compose profile**: service jo `up` par apne aap start nahi hoti, sirf maangne par chalti hai (hamara `dbmate`, profile `tools`). *docker-compose.yml*
+- **YAML anchor (`&name`) / alias (`*name`) / merge (`<<:`)**: YAML me ek value ko naam dekar kai jagah reuse karna, taaki
+  copy-paste na karna pade. *docker-compose.yml: healthcheck-timing, database-url*
+- **`${VAR:?message}`**: Compose/shell syntax. VAR missing ho to error ke saath ruk jao (fail fast), khaali value se mat chalo. *docker-compose.yml*
+- **Build arg (`ARG`)**: Docker image build karte waqt bahar se di gayi value (jaise version). *docker/dev.Dockerfile*
+- **`set -euo pipefail`**: Bash script ki "strict mode". Error, undefined variable ya pipe me failure aate hi script ruk jaati hai. *./dev*
+- **Lockfile (`pnpm-lock.yaml`)**: har dependency ka exact resolved version. Git me commit hota hai, taaki sabke paas bilkul
+  same libraries install hon. *repo root*
 - **Base image**: wo image jiske upar hum apni image banate hain (container ka OS). *ADR 0010*
 - **glibc vs musl**: Linux programs ki basic C library. Debian glibc use karta hai, Alpine musl. Kai binaries (jaise Chromium)
   glibc maan kar bani hoti hain, isliye Alpine par tootti hain. *ADR 0010*

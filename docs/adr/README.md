@@ -43,3 +43,4 @@ ya jab design doc se hatke kuch karte hain (deviation).
 | 0012 | [Phase 0: AI drafts, user interviews](0012-phase0-ai-drafts-user-interviews.md) | Superseded by 0014 |
 | 0013 | [Design doc copy in repo, no Google link](0013-design-doc-in-repo.md) | Accepted |
 | 0014 | [Skip Phase 0; MVP only](0014-skip-phase0-validation.md) | Accepted |
+| 0015 | [Dev environment details](0015-dev-environment-details.md) | Accepted |

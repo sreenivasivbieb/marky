@@ -1,0 +1,91 @@
+# Marky local dev environment (ADR 0005, 0015).
+# Seedha `docker compose` mat chalao; `./dev ...` use karo, kyunki wo versions.env + .env dono load karta hai
+# aur HOST_UID/HOST_GID set karta hai.
+
+name: marky
+
+# ---- Infra tunables (non-secret), ek jagah named (CLAUDE.md section 4) ----
+# Healthcheck: container "ready" hai ya nahi, kitni der me aur kitni baar check karein.
+x-dev-tunables:
+  healthcheck-timing: &healthcheck-timing
+    interval: 2s        # har check ke beech ka gap
+    timeout: 3s         # ek check kitni der tak wait kare
+    retries: 15         # itni baar fail ho tab "unhealthy"
+    start_period: 5s    # shuru ke itne time ke failures count nahi hote
+
+# DB connection URL, .env ke values se banta hai (password do jagah likhna na pade).
+# Host "postgres" = Docker network me service ka naam; 5432 = container ke andar Postgres ka fixed port.
+x-database-url: &database-url "postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/${POSTGRES_DB:?}?sslmode=disable"
+
+services:
+  dev:
+    build:
+      context: ./docker
+      dockerfile: dev.Dockerfile
+      args:
+        NODE_IMAGE_TAG: ${NODE_IMAGE_TAG:?versions.env missing}
+        PNPM_VERSION: ${PNPM_VERSION:?versions.env missing}
+    image: marky-dev:${NODE_IMAGE_TAG:?}-pnpm${PNPM_VERSION:?}
+    user: "${HOST_UID:?run via ./dev}:${HOST_GID:?run via ./dev}"
+    init: true                       # signals (Ctrl+C) sahi se child processes tak pahunchein
+    command: ["sleep", "infinity"]   # long-running; commands `exec` se chalti hain (ADR 0015)
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    environment:
+      DATABASE_URL: *database-url
+      VALKEY_URL: "redis://valkey:6379"   # Valkey Redis protocol bolta hai, isliye scheme redis://
+      PORT: ${WEB_PORT:?}
+    ports:
+      - "127.0.0.1:${WEB_PORT:?}:${WEB_PORT:?}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:${POSTGRES_VERSION:?versions.env missing}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?.env missing}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?.env missing}
+      POSTGRES_DB: ${POSTGRES_DB:?.env missing}
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:?}:5432"
+    volumes:
+      # Postgres 18+ images ka data /var/lib/postgresql/<major>/ ke andar hota hai, isliye mount parent folder par.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      <<: *healthcheck-timing
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+
+  valkey:
+    image: valkey/valkey:${VALKEY_VERSION:?versions.env missing}
+    ports:
+      - "127.0.0.1:${VALKEY_HOST_PORT:?}:6379"
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      <<: *healthcheck-timing
+      test: ["CMD", "valkey-cli", "ping"]
+
+  # One-off tool: `./dev db ...` chalata hai, ye hamesha chalu nahi rehta (profile "tools").
+  dbmate:
+    image: amacneil/dbmate:${DBMATE_VERSION:?versions.env missing}
+    profiles: ["tools"]
+    user: "${HOST_UID:?}:${HOST_GID:?}"
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    environment:
+      DATABASE_URL: *database-url
+      DBMATE_MIGRATIONS_DIR: /workspace/platform/db/migrations
+      DBMATE_NO_DUMP_SCHEMA: "true"   # provisional: schema.sql dump ka faisla pending (ADR 0011, 0015)
+      DBMATE_WAIT: "true"             # DB ready hone tak ruko
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  valkey-data:

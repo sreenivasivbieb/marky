@@ -1,0 +1,8 @@
+# pnpm workspaces (ADR 0002, 0007): har folder ka har sub-folder ek package hai.
+packages:
+  - "apps/*"
+  - "modules/*"
+  - "platform/*"
+
+# Store repo ke andar (gitignored), node_modules ke saath same filesystem par, taaki hardlinks chalein (ADR 0015).
+storeDir: ./.pnpm-store
