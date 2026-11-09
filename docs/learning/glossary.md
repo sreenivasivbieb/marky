@@ -119,6 +119,15 @@ Har naya term jo project me aata hai, yahan simple bhasha me. Format: **Term**: 
 - **Pure function**: same input par hamesha same output, aur koi bahar ki cheez nahi chhoota. Test karna aasaan hai
   (`parseEnv(source)`). *env.ts*
 - **Test fixture**: test ke liye fake data (`FAKE_SECRET`), asli secrets kabhi nahi. *env.test.ts*
+- **Property-based testing (fast-check)**: examples ki jagah niyam likho ("normalise do baar = ek baar"); tool hazaaron
+  random inputs se use todne ki koshish karta hai. *modules/documents tests*
+- **Counterexample / shrinking**: property toote to fast-check sabse chhota toota hua input dhoondh kar dikhata hai
+  (jaise `[["bold","code"]]`), taaki debug aasaan ho. *Step 2b probes*
+- **Canonical form**: ek cheez ke kai likhne ke tareekon me se ek fixed "official" roop. Same matlab = same bytes = same hash. *normalize.ts, hash.ts*
+- **SHA-256 / hash**: kisi bhi data ka 64-character "fingerprint". Data zara sa badle to fingerprint poora badal jaata hai. *hash.ts*
+- **Discriminated union**: kai shapes ka type jisme ek common field (`type`) batata hai ki kaunsa shape hai. *blockContentSchema*
+- **XSS (cross-site scripting)**: attacker ka script doosre user ke browser me chal jaana, jaise `javascript:` link se.
+  Bachav: aisa data darwaze par hi reject karo. *ALLOWED_LINK_PROTOCOLS*
 - **Negative test / probe**: jaan-boojh kar galti daal kar dekhna ki check use pakadta hai ya nahi (jaise `enum` probe).
   Sirf "pass" dekhna kaafi nahi hota. *Step 1b*
 

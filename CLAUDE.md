@@ -110,7 +110,7 @@ status strings, model names, rate limits) ke literal logic me nahi aayenge. Valu
 - **Step 2: Change engine** (ADR 0022; user faisle D53–D60), teen hisson me:
   - **2a (done):** schema migration `…_change_engine_core.sql` (documents, blocks, changes, versions, decisions,
     audit_events) + RLS + 11 value lists + `change-engine-schema.test.ts`.
-  - **2b (next):** `modules/documents`: block content Zod schema (text runs), run normalisation, canonical hash,
-    fractional keys (`fractional-indexing` lib) + property tests (`fast-check`).
-  - **2c:** `modules/changes`: propose / accept (doc row lock, hash re-check, apply, eager stale, version, audit,
+  - **2b (done, ADR 0023):** `modules/documents`: block Zod schema (text runs), normalisation, canonical hash,
+    `prepareBlock()` (validate → normalise → hash), fractional keys + property tests (`fast-check`).
+  - **2c (next):** `modules/changes`: propose / accept (doc row lock, hash re-check, apply, eager stale, version, audit,
     decision) / reject / human edit. Restore (FR-20) + edit-then-accept (FR-12) ke design sawal user se poochhne hain.
