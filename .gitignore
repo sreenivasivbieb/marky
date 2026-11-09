@@ -1,0 +1,24 @@
+# --- Secrets (CLAUDE.md section 4): kabhi commit nahi ---
+.env
+.env.*
+!.env.example
+
+# --- Dependencies (pnpm install se dobara ban jaate hain) ---
+node_modules/
+.pnpm-store/
+
+# --- Build / test output ---
+.next/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+playwright-report/
+test-results/
+
+# --- Logs / OS / editor junk ---
+*.log
+.DS_Store
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
