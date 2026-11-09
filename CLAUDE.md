@@ -10,6 +10,7 @@ Ye rules project owner (user) ne diye hain aur default behaviour ko override kar
 - **Source of truth (product + engineering design doc):** `docs/design/pm-workspace-design.md`
   Requirements (FR-xx / NFR-xx), data model, change engine, architecture sab wahan hain. Approved deviations `docs/adr/` me hain;
   design doc aur ADR me fark ho to ADR jeetta hai. Koi aur contradiction ya ambiguity mile to **rukkar user se poocho**, khud mat decide karo.
+  
 - Repo **public** hai: secrets, personal data (jaise interview notes me logon ke naam) kabhi commit nahi.
 - Core idea: AI document ko kabhi seedha edit nahi karta. Wo sirf `propose_change(...)` tool call se pending **Change** banata
   hai; insaan accept/reject karta hai. Accept = ek DB transaction (block apply + version snapshot + audit event + optional decision).
@@ -106,5 +107,10 @@ status strings, model names, rate limits) ke literal logic me nahi aayenge. Valu
   healthcheck timing compose ke `x-dev-tunables` me. (Schema dump ab ON hai, ADR 0020.)
 - Guest (share link) DB access design: sharing step me (ADR 0018).
 - Phase 0 ka koi kaam nahi hoga (ADR 0014).
-- Next (user ne chuna, D49): **Step 2: Change engine** (documents, blocks, versions, changes, audit; accept = ek
-  transaction). Code se pehle design sawal user se discuss karo.
+- **Step 2: Change engine** (ADR 0022; user faisle D53–D60), teen hisson me:
+  - **2a (done):** schema migration `…_change_engine_core.sql` (documents, blocks, changes, versions, decisions,
+    audit_events) + RLS + 11 value lists + `change-engine-schema.test.ts`.
+  - **2b (next):** `modules/documents`: block content Zod schema (text runs), run normalisation, canonical hash,
+    fractional keys (`fractional-indexing` lib) + property tests (`fast-check`).
+  - **2c:** `modules/changes`: propose / accept (doc row lock, hash re-check, apply, eager stale, version, audit,
+    decision) / reject / human edit. Restore (FR-20) + edit-then-accept (FR-12) ke design sawal user se poochhne hain.

@@ -84,11 +84,51 @@ export async function createProductAs(
   return product;
 }
 
+/** Test-only placeholder hash (64 hex). Asli hash modules/documents banata hai. */
+export const FAKE_BLOCK_HASH = "0".repeat(64);
+
+/** Document seed karo (admin ke roop me). */
+export async function seedDocument(
+  trx: Transaction<DB>,
+  product: { id: string },
+  createdBy: { id: string },
+  title = "Test PRD",
+): Promise<{ id: string; product_id: string }> {
+  return trx
+    .insertInto("documents")
+    .values({ product_id: product.id, title, created_by: createdBy.id })
+    .returning(["id", "product_id"])
+    .executeTakeFirstOrThrow();
+}
+
+/** Paragraph block seed karo (admin ke roop me). */
+export async function seedBlock(
+  trx: Transaction<DB>,
+  document: { id: string; product_id: string },
+  position: string,
+  text = "Hello",
+): Promise<{ id: string }> {
+  return trx
+    .insertInto("blocks")
+    .values({
+      document_id: document.id,
+      product_id: document.product_id,
+      position,
+      type: "paragraph",
+      content: JSON.stringify({ type: "paragraph", runs: [{ text }] }),
+      hash: FAKE_BLOCK_HASH,
+    })
+    .returning(["id"])
+    .executeTakeFirstOrThrow();
+}
+
 /** Postgres error codes jo tests me check hote hain (https://www.postgresql.org/docs/current/errcodes-appendix.html). */
 export const PG_ERROR = {
   insufficientPrivilege: "42501", // permission denied, ya "new row violates row-level security policy"
   checkViolation: "23514",
   undefinedTable: "42P01",        // table naam se resolve hi nahi hui (jaise schema ka USAGE nahi hai)
+  foreignKeyViolation: "23503",
+  uniqueViolation: "23505",
 } as const;
 
 /**

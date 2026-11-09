@@ -50,3 +50,4 @@ ya jab design doc se hatke kuch karte hain (deviation).
 | 0019 | [Data conventions + tenancy core](0019-data-conventions-tenancy-core.md) | Accepted |
 | 0020 | [pg driver, test DB, codegen, schema dump](0020-db-driver-testing-codegen.md) | Accepted |
 | 0021 | [Typed value lists + drift test](0021-typed-value-lists-and-drift-test.md) | Accepted |
+| 0022 | [Change engine design (schema + model)](0022-change-engine-design.md) | Accepted |

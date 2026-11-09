@@ -5,12 +5,30 @@
   "excludePattern": "public.schema_migrations",
   "customImports": {
     "MembershipRole": "../value-lists.ts",
-    "ProductPlan": "../value-lists.ts"
+    "ProductPlan": "../value-lists.ts",
+    "DocumentState": "../value-lists.ts",
+    "BlockType": "../value-lists.ts",
+    "ChangeOp": "../value-lists.ts",
+    "ChangeStatus": "../value-lists.ts",
+    "ChangeAuthorType": "../value-lists.ts",
+    "DecisionStatus": "../value-lists.ts",
+    "AuditActorType": "../value-lists.ts",
+    "AuditAction": "../value-lists.ts",
+    "AuditTargetType": "../value-lists.ts"
   },
   "overrides": {
     "columns": {
       "memberships.role": "MembershipRole",
-      "products.plan": "Generated<ProductPlan>"
+      "products.plan": "Generated<ProductPlan>",
+      "documents.state": "Generated<DocumentState>",
+      "blocks.type": "BlockType",
+      "changes.op": "ChangeOp",
+      "changes.status": "Generated<ChangeStatus>",
+      "changes.author_type": "ChangeAuthorType",
+      "decisions.status": "Generated<DecisionStatus>",
+      "audit_events.actor_type": "AuditActorType",
+      "audit_events.action": "AuditAction",
+      "audit_events.target_type": "AuditTargetType"
     }
   }
 }

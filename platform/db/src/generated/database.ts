@@ -3,14 +3,97 @@
  * Please do not edit it manually.
  */
 
-import type { MembershipRole, ProductPlan } from "../value-lists.ts";
+import type { AuditAction, AuditActorType, AuditTargetType, BlockType, ChangeAuthorType, ChangeOp, ChangeStatus, DecisionStatus, DocumentState, MembershipRole, ProductPlan } from "../value-lists.ts";
 import type { ColumnType } from "kysely";
 
 export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   ? ColumnType<S, I | undefined, U>
   : ColumnType<T, T | undefined, T>;
 
+export type Json = JsonValue;
+
+export type JsonArray = JsonValue[];
+
+export type JsonObject = {
+  [x: string]: JsonValue | undefined;
+};
+
+export type JsonPrimitive = boolean | number | string | null;
+
+export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
+
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
+
+export interface AuditEvents {
+  action: AuditAction;
+  actor_id: string | null;
+  actor_type: AuditActorType;
+  at: Generated<Timestamp>;
+  id: Generated<string>;
+  metadata: Generated<Json>;
+  product_id: string;
+  target_id: string;
+  target_type: AuditTargetType;
+}
+
+export interface Blocks {
+  content: Json;
+  created_at: Generated<Timestamp>;
+  document_id: string;
+  hash: string;
+  id: Generated<string>;
+  position: string;
+  product_id: string;
+  removed_at: Timestamp | null;
+  type: BlockType;
+  updated_at: Generated<Timestamp>;
+}
+
+export interface Changes {
+  after: Json | null;
+  anchor_block_id: string | null;
+  author_id: string;
+  author_type: ChangeAuthorType;
+  base_version: number;
+  before: Json | null;
+  before_hash: string | null;
+  block_id: string | null;
+  created_at: Generated<Timestamp>;
+  decided_at: Timestamp | null;
+  decided_by: string | null;
+  decision_note: string | null;
+  document_id: string;
+  id: Generated<string>;
+  op: ChangeOp;
+  product_id: string;
+  reason: string;
+  resulting_version: number | null;
+  status: Generated<ChangeStatus>;
+}
+
+export interface Decisions {
+  change_id: string;
+  created_at: Generated<Timestamp>;
+  created_by: string;
+  document_id: string;
+  id: Generated<string>;
+  product_id: string;
+  reason: string;
+  status: Generated<DecisionStatus>;
+  summary: string;
+  superseded_by: string | null;
+  version_number: number;
+}
+
+export interface Documents {
+  created_at: Generated<Timestamp>;
+  created_by: string;
+  current_version: Generated<number>;
+  id: Generated<string>;
+  product_id: string;
+  state: Generated<DocumentState>;
+  title: string;
+}
 
 export interface Memberships {
   created_at: Generated<Timestamp>;
@@ -35,8 +118,24 @@ export interface Users {
   name: string | null;
 }
 
+export interface Versions {
+  created_at: Generated<Timestamp>;
+  created_by: string;
+  document_id: string;
+  id: Generated<string>;
+  number: number;
+  product_id: string;
+  snapshot: Json;
+}
+
 export interface DB {
+  audit_events: AuditEvents;
+  blocks: Blocks;
+  changes: Changes;
+  decisions: Decisions;
+  documents: Documents;
   memberships: Memberships;
   products: Products;
   users: Users;
+  versions: Versions;
 }

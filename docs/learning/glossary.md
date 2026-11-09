@@ -53,6 +53,18 @@ Har naya term jo project me aata hai, yahan simple bhasha me. Format: **Term**: 
 - **Integration test**: asli DB/service ke saath test (unit test me sab fake hota hai). *rls.test.ts*
 - **Mutation probe**: code/DB me jaan-boojh kar bug daalo (jaise RLS off) aur dekho ki tests fail hote hain ya nahi.
   Isse pata chalta hai ki tests sach me kuch check kar rahe hain. *Step 1c*
+- **Composite foreign key**: do columns milkar doosri table ke do columns ko point karein (`(document_id, product_id)`).
+  Isse copy kiya hua `product_id` kabhi galat nahi ho sakta. *ADR 0022*
+- **Denormalisation**: ek value (product_id) ko kai tables me copy karna, taaki query/RLS fast aur simple ho. Iska risk
+  inconsistency hai, jiska ilaaj composite FK hai. *ADR 0022*
+- **Soft delete**: row mitaane ki jagah `removed_at` set karna. History aur references bache rehte hain. *ADR 0022*
+- **Partial index**: sirf kuch rows par index/unique rule (`WHERE removed_at IS NULL`). *blocks_live_position_uidx*
+- **Collation**: text ko sort/compare karne ke rules. `en_US` case ignore karta hai ('a1' < 'B1'); `"C"` = seedha byte order
+  ('B1' < 'a1'). Fractional keys ko byte order chahiye. *ADR 0022*
+- **Fractional indexing**: order ko sortable strings se rakhna. Do keys ke beech hamesha ek nayi key mil jaati hai, to insert
+  karte waqt baaki rows nahi badalti. *ADR 0022*
+- **TOAST / lz4**: Postgres bade values ko alag store karke compress karta hai (TOAST). `lz4` ek fast compression algorithm hai. *versions.snapshot*
+- **Append-only**: sirf naye rows jud sakte hain, purane badle ya mitaye nahi ja sakte (audit log). *audit_events*
 - **Drift**: do jagah rakhi ek hi cheez (DB CHECK aur TS list) ka dheere-dheere alag ho jaana. **Drift test** dono ko milata
   hai aur fark aate hi fail hota hai. *ADR 0021*
 - **Codegen override**: generated type ko kisi column ke liye apne type se badalna (`role: string` → `MembershipRole`). *ADR 0021*
