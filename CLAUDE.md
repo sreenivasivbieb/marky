@@ -38,6 +38,9 @@ User is project ko banate hue **seekhna** chahta hai. Isliye:
    Par har aisi idea **pehle discuss** hogi — kyun behtar hai, risk kya hai — phir implement.
 6. **Scope creep nahi.** Jo maanga gaya wahi banao. Extra feature, refactor ya dependency bina poochhe mat jodo.
 7. Hard-to-reverse ya outward-facing kaam (git push, deploy, DB drop, paid API calls, files delete) se pehle confirm karo.
+8. **Har user decision turant `DECISIONS.md` me jodo** (repo root). Isme: number, date, sawal, user ka faisla, ADR.
+   Jo chhoti cheez AI ne khud chuni, wo bhi "AI ne khud chuna" section me jaaye; aur pending sawal "Pending" me.
+   Ye file **local-only** hai (`.gitignore`), git me kabhi add mat karna. File na mile to user se poochho, khud nayi mat banao.
 
 ## 4. Hardcoding aur configuration rules
 
@@ -88,9 +91,14 @@ status strings, model names, rate limits) ke literal logic me nahi aayenge. Valu
 - **Step 1b (`@marky/config`) bana aur verify hua** (ADR 0016, 0017): no-build TS (Node native, `erasableSyntaxOnly`),
   TS 7 typecheck, Vitest; env loader (lazy) + tunables (base + per-env overrides, import par validate, frozen).
   Commands: `./dev pnpm typecheck`, `./dev pnpm test`, `./dev pnpm check`. Relative imports me `.ts` extension zaroori.
-- Git: `3405bb6`, `1fd5b24` pushed to origin/main. Step 1b abhi uncommitted. Repo-local git email = GitHub noreply.
-- Provisional (user ne inhe as-is commit karwaya, revisit pending): dev me Valkey bina password ke; dbmate schema dump off;
-  healthcheck timing compose ke `x-dev-tunables` me.
+- **Step 1c (tenancy core + RLS) bana aur verify hua** (ADR 0018–0020): `@marky/db` (Kysely + pg, `withActor`),
+  migrations `platform/db/migrations/`, roles marky_app/marky_user/marky_guest, users/products/memberships + RLS,
+  `./dev test` (marky_test DB, rollback per test), `./dev db bootstrap`. 40/40 tests + RLS mutation probe.
+- Git: Step 1b tak pushed (`d1a6faf`). Step 1c abhi uncommitted. Repo-local git email = GitHub noreply.
+- Provisional (user ne inhe as-is commit karwaya, revisit pending): dev me Valkey bina password ke;
+  healthcheck timing compose ke `x-dev-tunables` me. (Schema dump ab ON hai, ADR 0020.)
+- Open, user se poochhna hai: `memberships.role` jaise text+CHECK columns ka TS type codegen me `string` aata hai (ADR 0019).
+- Guest (share link) DB access design: sharing step me (ADR 0018).
 - Phase 0 ka koi kaam nahi hoga (ADR 0014).
-- Next: **Step 1c: pehli migrations + RLS design** (tenant context, guest/stakeholder context, Auth.js tables).
-  Code se pehle design user se discuss karo.
+- Next: user ke saath tay karna hai. Candidates: role type-gap ka fix; Step 2 (change engine: documents, blocks,
+  versions, changes); Auth step (Auth.js + users insert). Code se pehle design discuss karo.

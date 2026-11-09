@@ -12,11 +12,16 @@ Host par sirf **Docker (Compose ke saath)** aur **git** chahiye. Node/pnpm host 
 agar installed hain to bhi is project me use **nahi** hote (ADR 0005).
 
 ```bash
-./dev init          # .env banao (random DB password)
+./dev init          # .env banao (har secret ka alag random password)
 ./dev up            # Postgres + Valkey + dev container start
 ./dev pnpm install  # dependencies (container ke andar)
+./dev db up         # migrations chalao
+./dev db bootstrap  # app DB login (marky_app) ka password set karo
+./dev test          # test DB taiyaar karke saare tests (typecheck alag: ./dev pnpm typecheck)
 ./dev help          # saari commands
 ```
+
+Schema badalne ka flow: ADR 0020.
 
 ## Config kahan rehta hai
 

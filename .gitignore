@@ -3,6 +3,9 @@
 .env.*
 !.env.example
 
+# --- Local-only decisions log (user ka faisla D06): GitHub par kabhi nahi ---
+DECISIONS.md
+
 # --- Dependencies (pnpm install se dobara ban jaate hain) ---
 node_modules/
 .pnpm-store/

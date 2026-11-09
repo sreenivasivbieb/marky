@@ -13,9 +13,15 @@ x-dev-tunables:
     retries: 15         # itni baar fail ho tab "unhealthy"
     start_period: 5s    # shuru ke itne time ke failures count nahi hote
 
-# DB connection URL, .env ke values se banta hai (password do jagah likhna na pade).
+# DB connection URLs, .env ke values se bante hain (password do jagah likhna na pade).
 # Host "postgres" = Docker network me service ka naam; 5432 = container ke andar Postgres ka fixed port.
-x-database-url: &database-url "postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/${POSTGRES_DB:?}?sslmode=disable"
+# Do tarah ke users (ADR 0018):
+#   admin (POSTGRES_USER) -> migrations, bootstrap, test seeding. Superuser hai, RLS bypass karta hai.
+#   marky_app             -> app runtime. Role ka naam migration me define hai (platform/db/migrations).
+x-admin-database-url: &admin-database-url "postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/${POSTGRES_DB:?}?sslmode=disable"
+x-app-database-url: &app-database-url "postgres://marky_app:${APP_DB_PASSWORD:?.env missing APP_DB_PASSWORD}@postgres:5432/${POSTGRES_DB:?}?sslmode=disable"
+x-test-admin-database-url: &test-admin-database-url "postgres://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres:5432/${TEST_POSTGRES_DB:?.env missing TEST_POSTGRES_DB}?sslmode=disable"
+x-test-app-database-url: &test-app-database-url "postgres://marky_app:${APP_DB_PASSWORD:?}@postgres:5432/${TEST_POSTGRES_DB:?}?sslmode=disable"
 
 services:
   dev:
@@ -34,7 +40,10 @@ services:
       - .:/workspace
     environment:
       APP_ENV: ${APP_ENV:?.env missing APP_ENV (dekho .env.example)}
-      DATABASE_URL: *database-url
+      DATABASE_URL: *app-database-url             # app runtime: hamesha marky_app (RLS lagta hai)
+      MIGRATION_DATABASE_URL: *admin-database-url # sirf dev tooling (Kysely type codegen)
+      TEST_DATABASE_URL: *test-app-database-url
+      TEST_ADMIN_DATABASE_URL: *test-admin-database-url
       VALKEY_URL: "redis://valkey:6379"   # Valkey Redis protocol bolta hai, isliye scheme redis://
       PORT: ${WEB_PORT:?}
     ports:
@@ -51,6 +60,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:?.env missing}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?.env missing}
       POSTGRES_DB: ${POSTGRES_DB:?.env missing}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?}   # sirf `./dev db bootstrap` ke liye (marky_app ka password set karna)
     ports:
       - "127.0.0.1:${POSTGRES_HOST_PORT:?}:5432"
     volumes:
@@ -79,9 +89,10 @@ services:
     volumes:
       - .:/workspace
     environment:
-      DATABASE_URL: *database-url
+      DATABASE_URL: *admin-database-url
+      TEST_DATABASE_URL: *test-admin-database-url   # `./dev test` isse test DB migrate karta hai (dbmate --env)
       DBMATE_MIGRATIONS_DIR: /workspace/platform/db/migrations
-      DBMATE_NO_DUMP_SCHEMA: "true"   # provisional: schema.sql dump ka faisla pending (ADR 0011, 0015)
+      DBMATE_SCHEMA_FILE: /workspace/platform/db/schema.sql   # har migration ke baad schema dump (ADR 0020)
       DBMATE_WAIT: "true"             # DB ready hone tak ruko
     depends_on:
       postgres:

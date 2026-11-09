@@ -25,6 +25,36 @@ Har naya term jo project me aata hai, yahan simple bhasha me. Format: **Term**: 
 - **Migration runner (dbmate)**: tool jo migration files ko order me chalata hai aur DB ki ek table (`schema_migrations`)
   me yaad rakhta hai ki kaunsi chal chuki hain. *ADR 0011*
 - **Up / down migration**: `up` = change lagao, `down` = wahi change ulta karo (rollback). *ADR 0011*
+- **RLS policy (`USING` / `WITH CHECK`)**: `USING` = kaunsi purani rows dikh/badal sakti hain; `WITH CHECK` = nayi ya
+  badli hui row allowed hai ya nahi. Policy se bahar ki rows par UPDATE/DELETE error nahi deta, bas "0 rows". *tenancy_core migration*
+- **GRANT vs POLICY (defense in depth)**: GRANT = kaunsi table/column; POLICY = kaunsi rows. Ek parat toote to doosri
+  bachati hai (mutation probe me dikha). *ADR 0018*
+- **DB role / `SET ROLE` / NOINHERIT**: Postgres me role = user ya group. `SET ROLE` se kisi aur role ke rights le lete ho.
+  NOINHERIT = member hone ke bawajood rights apne aap nahi milte, `SET ROLE` karna padta hai. *ADR 0018*
+- **`SET LOCAL` / `set_config(..., true)`**: setting sirf current transaction tak. Commit/rollback par mit jaati hai,
+  isliye pooled connection par leak nahi hoti. *actor.ts*
+- **Actor / claim**: "request kaun kar raha hai" ki info, jo DB ko JSON me di jaati hai. *ADR 0018*
+- **SECURITY DEFINER**: function apne owner ke rights se chalta hai, caller ke nahi. Powerful aur khatarnaak hai, isliye
+  `search_path = ''` aur chhota, focused logic. *tenancy_core migration*
+- **`search_path`**: Postgres bina schema ke naam (`users`) ko kin schemas me dhoondhe. Khaali rakhne se koi fake table
+  beech me nahi ghus sakti. *migrations*
+- **Least privilege**: har role ko sirf utna access jitna zaroori ho, usse zyada nahi (`REVOKE ... FROM PUBLIC`). *ADR 0018*
+- **Fail closed**: kuch missing ho (jaise actor) to "sab band", "sab khula" nahi. *rls.test.ts*
+- **UUIDv7**: time-ordered UUID. Shuru ke bits time hain, to naye IDs index ke end me judte hain (fast), par phir bhi
+  guess nahi hote. *ADR 0019*
+- **CHECK constraint**: column par rule (jaise role sirf 3 values). DB khud enforce karta hai. *ADR 0019*
+- **Invariant**: aisa rule jo hamesha sach rehna chahiye ("har product me kam se kam ek owner"). *ADR 0019*
+- **Trigger**: INSERT/UPDATE/DELETE par apne aap chalne wala function. *keep_at_least_one_owner*
+- **Race condition / row lock (`FOR UPDATE`)**: do requests ek saath chalein to dono check pass karke galat state bana sakti
+  hain. Lock se wo ek-ek karke chalti hain. *keep_at_least_one_owner*
+- **Idempotent**: kitni baar bhi chalao, result same (`IF NOT EXISTS`, `./dev db bootstrap`). *roles migration*
+- **SQLSTATE error code**: Postgres ka 5-character error code (`42501` permission, `23514` check, `42P01` table nahi mili). *testing/db.ts*
+- **SAVEPOINT**: transaction ke beech ek checkpoint. Error ke baad sirf wahin tak rollback, poora transaction nahi. *expectDbError*
+- **Integration test**: asli DB/service ke saath test (unit test me sab fake hota hai). *rls.test.ts*
+- **Mutation probe**: code/DB me jaan-boojh kar bug daalo (jaise RLS off) aur dekho ki tests fail hote hain ya nahi.
+  Isse pata chalta hai ki tests sach me kuch check kar rahe hain. *Step 1c*
+- **Schema dump**: poore DB structure ki ek SQL file, jo migrations ke baad ka final result dikhati hai. *ADR 0020*
+- **Connection pool**: pehle se khule DB connections ka set jo requests me reuse hota hai (naya connection banana mehenga hai). *client.ts*
 - **ORM (Object-Relational Mapper)**: library jo tables ko classes/objects jaisa dikhati hai aur SQL khud likhti hai.
   Aasaan lagta hai, par SQL chhup jaata hai. *ADR 0008*
 - **Query builder (Kysely)**: TS me SQL jaisa code likhte ho (`selectFrom('documents').where(...)`). Type-safe hai, par

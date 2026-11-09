@@ -46,3 +46,6 @@ ya jab design doc se hatke kuch karte hain (deviation).
 | 0015 | [Dev environment details](0015-dev-environment-details.md) | Accepted |
 | 0016 | [No-build TypeScript (Node native) + Vitest](0016-no-build-typescript-and-vitest.md) | Accepted |
 | 0017 | [`@marky/config` design](0017-config-module-design.md) | Accepted |
+| 0018 | [RLS: actor claim + DB roles](0018-rls-actor-claim-and-db-roles.md) | Accepted |
+| 0019 | [Data conventions + tenancy core](0019-data-conventions-tenancy-core.md) | Accepted |
+| 0020 | [pg driver, test DB, codegen, schema dump](0020-db-driver-testing-codegen.md) | Accepted |

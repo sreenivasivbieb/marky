@@ -1,0 +1,22 @@
+{
+  "name": "@marky/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Postgres access: Kysely client, actor/RLS transactions, generated types. Migrations: ./migrations (dbmate). ADR 0008, 0018, 0020.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "db:types": "kysely-codegen --dialect postgres --url \"$MIGRATION_DATABASE_URL\" --exclude-pattern 'public.schema_migrations' --out-file src/generated/database.ts"
+  },
+  "dependencies": {
+    "kysely": "0.29.8",
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "@types/pg": "8.23.1",
+    "kysely-codegen": "0.20.0",
+    "zod": "4.6.7"
+  }
+}
